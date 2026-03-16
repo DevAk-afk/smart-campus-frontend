@@ -6,6 +6,7 @@ const font = "'Segoe UI', system-ui, sans-serif";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -14,6 +15,15 @@ export default function Navbar() {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (!e.target.closest("#user-dropdown")) setShowDropdown(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   const handleLogout = () => {
@@ -70,37 +80,96 @@ export default function Navbar() {
               }}>{label}</Link>
             ))}
 
-            {/* User badge */}
-            <div style={{
-              marginLeft: "12px", display: "flex", alignItems: "center", gap: "10px",
-              padding: "6px 12px 6px 6px",
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              borderRadius: "24px",
-            }}>
-              <div style={{
-                width: "28px", height: "28px", borderRadius: "50%",
-                background: "linear-gradient(135deg, #3b82f6, #06b6d4)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: "12px", fontWeight: "700", color: "white",
-              }}>
-                {user.name?.charAt(0).toUpperCase()}
-              </div>
-              <span style={{ fontSize: "13px", color: "#cbd5e1", maxWidth: "120px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {user.name}
-              </span>
-            </div>
+            {/* User dropdown */}
+            <div id="user-dropdown" style={{ position: "relative", marginLeft: "12px" }}>
+              <button
+                onClick={() => setShowDropdown(!showDropdown)}
+                style={{
+                  display: "flex", alignItems: "center", gap: "10px",
+                  padding: "6px 12px 6px 6px",
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: "24px", cursor: "pointer", fontFamily: font,
+                }}>
+                <div style={{
+                  width: "28px", height: "28px", borderRadius: "50%",
+                  background: user.role === "admin"
+                    ? "linear-gradient(135deg, #f59e0b, #ef4444)"
+                    : "linear-gradient(135deg, #3b82f6, #06b6d4)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: "12px", fontWeight: "700", color: "white",
+                }}>
+                  {user.name?.charAt(0).toUpperCase()}
+                </div>
+                <span style={{ fontSize: "13px", color: "#cbd5e1", maxWidth: "100px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {user.name}
+                </span>
+                <span style={{ fontSize: "10px", color: "#475569" }}>▾</span>
+              </button>
 
-            <button onClick={handleLogout} style={{
-              marginLeft: "8px", padding: "8px 14px",
-              background: "rgba(239,68,68,0.08)",
-              border: "1px solid rgba(239,68,68,0.2)",
-              borderRadius: "8px", color: "#f87171",
-              fontSize: "13px", fontWeight: "500",
-              cursor: "pointer", transition: "all 0.2s", fontFamily: font,
-            }}>
-              Logout
-            </button>
+              {/* Dropdown menu */}
+              {showDropdown && (
+                <div style={{
+                  position: "absolute", top: "calc(100% + 8px)", right: 0,
+                  background: "#1e293b",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: "12px", padding: "8px",
+                  minWidth: "180px",
+                  boxShadow: "0 20px 40px rgba(0,0,0,0.4)",
+                  zIndex: 200,
+                }}>
+                  {/* User info */}
+                  <div style={{ padding: "8px 12px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)", marginBottom: "6px" }}>
+                    <div style={{ fontSize: "13px", fontWeight: "600", color: "#f1f5f9" }}>{user.name}</div>
+                    <div style={{ fontSize: "11px", color: "#475569", marginTop: "2px" }}>{user.email}</div>
+                    <div style={{
+                      display: "inline-flex", marginTop: "6px",
+                      fontSize: "10px", fontWeight: "600",
+                      color: user.role === "admin" ? "#f59e0b" : "#38bdf8",
+                      background: user.role === "admin" ? "rgba(245,158,11,0.1)" : "rgba(56,189,248,0.1)",
+                      padding: "2px 8px", borderRadius: "10px",
+                      textTransform: "uppercase", letterSpacing: "0.5px",
+                    }}>
+                      {user.role === "admin" ? "🛡️ Admin" : "🎓 Student"}
+                    </div>
+                  </div>
+
+                  {/* Edit Profile */}
+                  <Link
+                    to="/profile"
+                    onClick={() => setShowDropdown(false)}
+                    style={{
+                      display: "flex", alignItems: "center", gap: "10px",
+                      padding: "9px 12px", borderRadius: "8px",
+                      textDecoration: "none", color: "#94a3b8",
+                      fontSize: "13px", transition: "all 0.15s",
+                      background: "transparent",
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "#f1f5f9"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#94a3b8"; }}
+                  >
+                    <span>✏️</span> Edit Profile
+                  </Link>
+
+                  {/* Logout */}
+                  <button
+                    onClick={handleLogout}
+                    style={{
+                      width: "100%", display: "flex", alignItems: "center", gap: "10px",
+                      padding: "9px 12px", borderRadius: "8px",
+                      background: "transparent", border: "none",
+                      color: "#f87171", fontSize: "13px",
+                      cursor: "pointer", fontFamily: font, transition: "all 0.15s",
+                      textAlign: "left",
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = "rgba(239,68,68,0.08)"}
+                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                  >
+                    <span>🚪</span> Logout
+                  </button>
+                </div>
+              )}
+            </div>
           </>
         ) : (
           <>

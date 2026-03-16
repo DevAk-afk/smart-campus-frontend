@@ -2,7 +2,6 @@ import axios from "axios";
 
 const API = axios.create({ baseURL: "https://smart-campus-backend-ggrp.onrender.com/api" });
 
-// Attach JWT token to every request automatically
 API.interceptors.request.use((config) => {
   const user = JSON.parse(localStorage.getItem("user") || "null");
   if (user?.token) {
@@ -15,6 +14,10 @@ API.interceptors.request.use((config) => {
 export const registerUser = (data) => API.post("/auth/register", data);
 export const loginUser = (data) => API.post("/auth/login", data);
 export const getMe = () => API.get("/auth/me");
+
+// Profile
+export const getProfile = () => API.get("/users/profile");
+export const updateProfile = (data) => API.put("/users/profile", data);
 
 // Complaints
 export const createComplaint = (formData) =>
