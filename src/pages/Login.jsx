@@ -1,0 +1,145 @@
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { loginUser } from "../services/api";
+import { useAuth } from "../context/AuthContext";
+
+const font = "'Segoe UI', system-ui, sans-serif";
+
+export default function Login() {
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [focused, setFocused] = useState("");
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      const { data } = await loginUser(form);
+      login(data);
+      navigate(data.role === "admin" ? "/admin" : "/dashboard");
+    } catch (err) {
+      setError(err.response?.data?.message || "Login failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const inputStyle = (field) => ({
+    width: "100%",
+    padding: "13px 16px",
+    background: "#1e293b",
+    border: focused === field ? "1px solid #38bdf8" : "1px solid rgba(255,255,255,0.08)",
+    boxShadow: focused === field ? "0 0 0 3px rgba(56,189,248,0.1)" : "none",
+    borderRadius: "10px",
+    color: "#f1f5f9",
+    fontSize: "14px",
+    outline: "none",
+    transition: "all 0.2s",
+    boxSizing: "border-box",
+    fontFamily: font,
+  });
+
+  return (
+    <div style={{
+      minHeight: "100vh", background: "#0f172a", display: "flex",
+      alignItems: "center", justifyContent: "center",
+      fontFamily: font, padding: "20px",
+    }}>
+      {/* Background glow */}
+      <div style={{
+        position: "fixed", top: "20%", left: "50%", transform: "translateX(-50%)",
+        width: "600px", height: "400px", borderRadius: "50%",
+        background: "radial-gradient(ellipse, rgba(59,130,246,0.08) 0%, transparent 70%)",
+        pointerEvents: "none",
+      }} />
+
+      <div style={{ width: "100%", maxWidth: "420px", position: "relative" }}>
+        {/* Logo */}
+        <div style={{ textAlign: "center", marginBottom: "40px" }}>
+          <div style={{
+            width: "52px", height: "52px", margin: "0 auto 16px",
+            background: "linear-gradient(135deg, #3b82f6, #06b6d4)",
+            borderRadius: "14px", display: "flex", alignItems: "center",
+            justifyContent: "center", fontSize: "24px", fontWeight: "700",
+            color: "white", boxShadow: "0 0 30px rgba(59,130,246,0.4)",
+          }}>S</div>
+          <h1 style={{ fontSize: "22px", fontWeight: "700", color: "#f1f5f9", margin: "0 0 6px", letterSpacing: "-0.5px" }}>
+            Welcome back
+          </h1>
+          <p style={{ fontSize: "13px", color: "#64748b", margin: 0 }}>
+            Sign in to Smart Campus System
+          </p>
+        </div>
+
+        {/* Card */}
+        <div style={{
+          background: "#1e293b", borderRadius: "16px",
+          border: "1px solid rgba(255,255,255,0.06)",
+          padding: "32px", boxShadow: "0 25px 50px rgba(0,0,0,0.5)",
+        }}>
+          {error && (
+            <div style={{
+              background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)",
+              borderRadius: "8px", padding: "12px 16px", marginBottom: "20px",
+              fontSize: "13px", color: "#f87171",
+            }}>{error}</div>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            <div style={{ marginBottom: "16px" }}>
+              <label style={{ display: "block", fontSize: "11px", fontWeight: "600", color: "#64748b", letterSpacing: "0.8px", textTransform: "uppercase", marginBottom: "8px" }}>
+                Email Address
+              </label>
+              <input
+                type="email" required
+                style={inputStyle("email")}
+                placeholder="you@campus.edu"
+                value={form.email}
+                onFocus={() => setFocused("email")}
+                onBlur={() => setFocused("")}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+              />
+            </div>
+
+            <div style={{ marginBottom: "24px" }}>
+              <label style={{ display: "block", fontSize: "11px", fontWeight: "600", color: "#64748b", letterSpacing: "0.8px", textTransform: "uppercase", marginBottom: "8px" }}>
+                Password
+              </label>
+              <input
+                type="password" required
+                style={inputStyle("password")}
+                placeholder="••••••••"
+                value={form.password}
+                onFocus={() => setFocused("password")}
+                onBlur={() => setFocused("")}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+              />
+            </div>
+
+            <button type="submit" disabled={loading} style={{
+              width: "100%", padding: "13px",
+              background: loading ? "#1e3a5f" : "linear-gradient(135deg, #3b82f6, #06b6d4)",
+              border: "none", borderRadius: "10px", color: "white",
+              fontSize: "14px", fontWeight: "600", cursor: loading ? "not-allowed" : "pointer",
+              boxShadow: loading ? "none" : "0 0 20px rgba(59,130,246,0.35)",
+              transition: "all 0.2s", fontFamily: font,
+            }}>
+              {loading ? "Signing in..." : "Sign In →"}
+            </button>
+          </form>
+
+          <p style={{ textAlign: "center", marginTop: "20px", fontSize: "13px", color: "#475569" }}>
+            Don't have an account?{" "}
+            <Link to="/register" style={{ color: "#38bdf8", textDecoration: "none", fontWeight: "600" }}>
+              Register
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
