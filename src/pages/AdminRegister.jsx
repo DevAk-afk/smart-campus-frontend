@@ -4,12 +4,10 @@ import { registerUser } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 const font = "'Segoe UI', system-ui, sans-serif";
+const ADMIN_SECRET = "admin@campus2024"; // Change this to your secret code
 
-export default function Register() {
-  const [form, setForm] = useState({
-    name: "", email: "", password: "", role: "student",
-    rollNumber: "", department: "",
-  });
+export default function AdminRegister() {
+  const [form, setForm] = useState({ name: "", email: "", password: "", adminCode: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [focused, setFocused] = useState("");
@@ -19,11 +17,22 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (form.adminCode !== ADMIN_SECRET) {
+      setError("Invalid admin secret code");
+      return;
+    }
+
     setLoading(true);
     try {
-      const { data } = await registerUser({ ...form, role: "student" });
+      const { data } = await registerUser({
+        name: form.name,
+        email: form.email,
+        password: form.password,
+        role: "admin",
+      });
       login(data);
-      navigate("/dashboard");
+      navigate("/admin");
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed");
     } finally {
@@ -34,8 +43,8 @@ export default function Register() {
   const inputStyle = (field) => ({
     width: "100%", padding: "12px 16px",
     background: "#0f172a",
-    border: focused === field ? "1px solid #38bdf8" : "1px solid rgba(255,255,255,0.08)",
-    boxShadow: focused === field ? "0 0 0 3px rgba(56,189,248,0.1)" : "none",
+    border: focused === field ? "1px solid #f59e0b" : "1px solid rgba(255,255,255,0.08)",
+    boxShadow: focused === field ? "0 0 0 3px rgba(245,158,11,0.1)" : "none",
     borderRadius: "10px", color: "#f1f5f9", fontSize: "14px",
     outline: "none", transition: "all 0.2s", boxSizing: "border-box", fontFamily: font,
   });
@@ -46,54 +55,52 @@ export default function Register() {
     textTransform: "uppercase", marginBottom: "8px",
   };
 
-  const departments = ["Computer Science", "Mechanical", "Civil", "Electrical", "Electronics", "Other"];
-
   return (
     <div style={{
       minHeight: "100vh", background: "#0f172a", display: "flex",
       alignItems: "center", justifyContent: "center",
       fontFamily: font, padding: "20px",
     }}>
-      {/* Background glow */}
+      {/* Background glow - amber for admin */}
       <div style={{
         position: "fixed", top: "20%", left: "50%", transform: "translateX(-50%)",
         width: "600px", height: "400px", borderRadius: "50%",
-        background: "radial-gradient(ellipse, rgba(56,189,248,0.06) 0%, transparent 70%)",
+        background: "radial-gradient(ellipse, rgba(245,158,11,0.06) 0%, transparent 70%)",
         pointerEvents: "none",
       }} />
 
-      <div style={{ width: "100%", maxWidth: "480px", position: "relative" }}>
+      <div style={{ width: "100%", maxWidth: "440px", position: "relative" }}>
 
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: "32px" }}>
           <div style={{
             width: "52px", height: "52px", margin: "0 auto 16px",
-            background: "linear-gradient(135deg, #3b82f6, #06b6d4)",
+            background: "linear-gradient(135deg, #f59e0b, #ef4444)",
             borderRadius: "14px", display: "flex", alignItems: "center",
-            justifyContent: "center", fontSize: "24px", fontWeight: "700",
-            color: "white", boxShadow: "0 0 30px rgba(59,130,246,0.4)",
-          }}>🎓</div>
+            justifyContent: "center", fontSize: "24px",
+            color: "white", boxShadow: "0 0 30px rgba(245,158,11,0.4)",
+          }}>🛡️</div>
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "6px",
-            background: "rgba(56,189,248,0.08)", border: "1px solid rgba(56,189,248,0.2)",
+            background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)",
             borderRadius: "20px", padding: "4px 12px", marginBottom: "12px",
           }}>
-            <span style={{ fontSize: "11px", color: "#38bdf8", fontWeight: "600", letterSpacing: "0.5px" }}>
-              STUDENT PORTAL
+            <span style={{ fontSize: "11px", color: "#f59e0b", fontWeight: "600", letterSpacing: "0.5px" }}>
+              ADMIN PORTAL
             </span>
           </div>
           <h1 style={{ fontSize: "22px", fontWeight: "700", color: "#f1f5f9", margin: "0 0 6px", letterSpacing: "-0.5px" }}>
-            Student Registration
+            Admin Registration
           </h1>
           <p style={{ fontSize: "13px", color: "#64748b", margin: 0 }}>
-            Create your student account to file complaints
+            Restricted access — admin secret code required
           </p>
         </div>
 
         {/* Card */}
         <div style={{
           background: "#1e293b", borderRadius: "16px",
-          border: "1px solid rgba(56,189,248,0.1)",
+          border: "1px solid rgba(245,158,11,0.1)",
           padding: "32px", boxShadow: "0 25px 50px rgba(0,0,0,0.5)",
         }}>
           {error && (
@@ -108,7 +115,7 @@ export default function Register() {
             {/* Name */}
             <div style={{ marginBottom: "16px" }}>
               <label style={labelStyle}>Full Name</label>
-              <input required style={inputStyle("name")} placeholder="John Doe"
+              <input required style={inputStyle("name")} placeholder="Admin Name"
                 value={form.name}
                 onFocus={() => setFocused("name")} onBlur={() => setFocused("")}
                 onChange={(e) => setForm({ ...form, name: e.target.value })} />
@@ -117,34 +124,14 @@ export default function Register() {
             {/* Email */}
             <div style={{ marginBottom: "16px" }}>
               <label style={labelStyle}>Email Address</label>
-              <input type="email" required style={inputStyle("email")} placeholder="you@campus.edu"
+              <input type="email" required style={inputStyle("email")} placeholder="admin@campus.edu"
                 value={form.email}
                 onFocus={() => setFocused("email")} onBlur={() => setFocused("")}
                 onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </div>
 
-            {/* Roll + Department */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
-              <div>
-                <label style={labelStyle}>Roll Number</label>
-                <input style={inputStyle("roll")} placeholder="e.g. CS21B001"
-                  value={form.rollNumber}
-                  onFocus={() => setFocused("roll")} onBlur={() => setFocused("")}
-                  onChange={(e) => setForm({ ...form, rollNumber: e.target.value })} />
-              </div>
-              <div>
-                <label style={labelStyle}>Department</label>
-                <select style={inputStyle("dept")} value={form.department}
-                  onFocus={() => setFocused("dept")} onBlur={() => setFocused("")}
-                  onChange={(e) => setForm({ ...form, department: e.target.value })}>
-                  <option value="">Select</option>
-                  {departments.map(d => <option key={d} value={d}>{d}</option>)}
-                </select>
-              </div>
-            </div>
-
             {/* Password */}
-            <div style={{ marginBottom: "24px" }}>
+            <div style={{ marginBottom: "16px" }}>
               <label style={labelStyle}>Password</label>
               <input type="password" required style={inputStyle("password")} placeholder="Min. 6 characters"
                 value={form.password}
@@ -152,21 +139,34 @@ export default function Register() {
                 onChange={(e) => setForm({ ...form, password: e.target.value })} />
             </div>
 
+            {/* Admin Secret Code */}
+            <div style={{ marginBottom: "24px" }}>
+              <label style={{ ...labelStyle, color: "#f59e0b" }}>Admin Secret Code</label>
+              <input type="password" required style={inputStyle("adminCode")}
+                placeholder="Enter admin secret code"
+                value={form.adminCode}
+                onFocus={() => setFocused("adminCode")} onBlur={() => setFocused("")}
+                onChange={(e) => setForm({ ...form, adminCode: e.target.value })} />
+              <p style={{ fontSize: "11px", color: "#475569", marginTop: "6px" }}>
+                🔒 Contact your system administrator to get the secret code
+              </p>
+            </div>
+
             <button type="submit" disabled={loading} style={{
               width: "100%", padding: "13px",
-              background: loading ? "#1e3a5f" : "linear-gradient(135deg, #3b82f6, #06b6d4)",
+              background: loading ? "#2d1f00" : "linear-gradient(135deg, #f59e0b, #ef4444)",
               border: "none", borderRadius: "10px", color: "white",
               fontSize: "14px", fontWeight: "600", cursor: loading ? "not-allowed" : "pointer",
-              boxShadow: loading ? "none" : "0 0 20px rgba(59,130,246,0.35)",
+              boxShadow: loading ? "none" : "0 0 20px rgba(245,158,11,0.35)",
               transition: "all 0.2s", fontFamily: font,
             }}>
-              {loading ? "Creating account..." : "Create Student Account →"}
+              {loading ? "Creating account..." : "Create Admin Account →"}
             </button>
           </form>
 
           <p style={{ textAlign: "center", marginTop: "20px", fontSize: "13px", color: "#475569" }}>
             Already have an account?{" "}
-            <Link to="/login" style={{ color: "#38bdf8", textDecoration: "none", fontWeight: "600" }}>
+            <Link to="/login" style={{ color: "#f59e0b", textDecoration: "none", fontWeight: "600" }}>
               Sign in
             </Link>
           </p>
@@ -176,9 +176,9 @@ export default function Register() {
             borderTop: "1px solid rgba(255,255,255,0.06)",
             textAlign: "center",
           }}>
-            <span style={{ fontSize: "12px", color: "#334155" }}>Are you an admin? </span>
-            <Link to="/admin-register" style={{ fontSize: "12px", color: "#64748b", textDecoration: "none", fontWeight: "600" }}>
-              Admin Registration →
+            <span style={{ fontSize: "12px", color: "#334155" }}>Are you a student? </span>
+            <Link to="/register" style={{ fontSize: "12px", color: "#64748b", textDecoration: "none", fontWeight: "600" }}>
+              Student Registration →
             </Link>
           </div>
         </div>

@@ -29,18 +29,12 @@ export default function Login() {
   };
 
   const inputStyle = (field) => ({
-    width: "100%",
-    padding: "13px 16px",
+    width: "100%", padding: "13px 16px",
     background: "#1e293b",
     border: focused === field ? "1px solid #38bdf8" : "1px solid rgba(255,255,255,0.08)",
     boxShadow: focused === field ? "0 0 0 3px rgba(56,189,248,0.1)" : "none",
-    borderRadius: "10px",
-    color: "#f1f5f9",
-    fontSize: "14px",
-    outline: "none",
-    transition: "all 0.2s",
-    boxSizing: "border-box",
-    fontFamily: font,
+    borderRadius: "10px", color: "#f1f5f9", fontSize: "14px",
+    outline: "none", transition: "all 0.2s", boxSizing: "border-box", fontFamily: font,
   });
 
   return (
@@ -49,7 +43,6 @@ export default function Login() {
       alignItems: "center", justifyContent: "center",
       fontFamily: font, padding: "20px",
     }}>
-      {/* Background glow */}
       <div style={{
         position: "fixed", top: "20%", left: "50%", transform: "translateX(-50%)",
         width: "600px", height: "400px", borderRadius: "50%",
@@ -94,30 +87,20 @@ export default function Login() {
               <label style={{ display: "block", fontSize: "11px", fontWeight: "600", color: "#64748b", letterSpacing: "0.8px", textTransform: "uppercase", marginBottom: "8px" }}>
                 Email Address
               </label>
-              <input
-                type="email" required
-                style={inputStyle("email")}
-                placeholder="you@campus.edu"
+              <input type="email" required style={inputStyle("email")} placeholder="you@campus.edu"
                 value={form.email}
-                onFocus={() => setFocused("email")}
-                onBlur={() => setFocused("")}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-              />
+                onFocus={() => setFocused("email")} onBlur={() => setFocused("")}
+                onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </div>
 
             <div style={{ marginBottom: "24px" }}>
               <label style={{ display: "block", fontSize: "11px", fontWeight: "600", color: "#64748b", letterSpacing: "0.8px", textTransform: "uppercase", marginBottom: "8px" }}>
                 Password
               </label>
-              <input
-                type="password" required
-                style={inputStyle("password")}
-                placeholder="••••••••"
+              <input type="password" required style={inputStyle("password")} placeholder="••••••••"
                 value={form.password}
-                onFocus={() => setFocused("password")}
-                onBlur={() => setFocused("")}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-              />
+                onFocus={() => setFocused("password")} onBlur={() => setFocused("")}
+                onChange={(e) => setForm({ ...form, password: e.target.value })} />
             </div>
 
             <button type="submit" disabled={loading} style={{
@@ -132,12 +115,39 @@ export default function Login() {
             </button>
           </form>
 
-          <p style={{ textAlign: "center", marginTop: "20px", fontSize: "13px", color: "#475569" }}>
-            Don't have an account?{" "}
-            <Link to="/register" style={{ color: "#38bdf8", textDecoration: "none", fontWeight: "600" }}>
-              Register
-            </Link>
-          </p>
+          {/* Register links */}
+          <div style={{
+            marginTop: "20px", paddingTop: "20px",
+            borderTop: "1px solid rgba(255,255,255,0.06)",
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+          }}>
+            <div>
+              <p style={{ fontSize: "12px", color: "#475569", margin: "0 0 6px" }}>New student?</p>
+              <Link to="/register" style={{
+                display: "inline-flex", alignItems: "center", gap: "6px",
+                padding: "7px 14px",
+                background: "rgba(56,189,248,0.08)",
+                border: "1px solid rgba(56,189,248,0.2)",
+                borderRadius: "8px", color: "#38bdf8",
+                fontSize: "12px", fontWeight: "600", textDecoration: "none",
+              }}>
+                🎓 Student Register
+              </Link>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <p style={{ fontSize: "12px", color: "#475569", margin: "0 0 6px" }}>Admin access?</p>
+              <Link to="/admin-register" style={{
+                display: "inline-flex", alignItems: "center", gap: "6px",
+                padding: "7px 14px",
+                background: "rgba(245,158,11,0.08)",
+                border: "1px solid rgba(245,158,11,0.2)",
+                borderRadius: "8px", color: "#f59e0b",
+                fontSize: "12px", fontWeight: "600", textDecoration: "none",
+              }}>
+                🛡️ Admin Register
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </div>
