@@ -4,7 +4,7 @@ import { registerUser } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 const font = "'Segoe UI', system-ui, sans-serif";
-const ADMIN_SECRET = "admin@campus2024"; // Change this to your secret code
+const ADMIN_SECRET = "admin@campus2024";
 
 export default function AdminRegister() {
   const [form, setForm] = useState({ name: "", email: "", password: "", adminCode: "" });
@@ -17,20 +17,13 @@ export default function AdminRegister() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-
     if (form.adminCode !== ADMIN_SECRET) {
       setError("Invalid admin secret code");
       return;
     }
-
     setLoading(true);
     try {
-      const { data } = await registerUser({
-        name: form.name,
-        email: form.email,
-        password: form.password,
-        role: "admin",
-      });
+      const { data } = await registerUser({ name: form.name, email: form.email, password: form.password, role: "admin" });
       login(data);
       navigate("/admin");
     } catch (err) {
@@ -41,8 +34,7 @@ export default function AdminRegister() {
   };
 
   const inputStyle = (field) => ({
-    width: "100%", padding: "12px 16px",
-    background: "#0f172a",
+    width: "100%", padding: "12px 16px", background: "#0f172a",
     border: focused === field ? "1px solid #f59e0b" : "1px solid rgba(255,255,255,0.08)",
     boxShadow: focused === field ? "0 0 0 3px rgba(245,158,11,0.1)" : "none",
     borderRadius: "10px", color: "#f1f5f9", fontSize: "14px",
@@ -51,21 +43,19 @@ export default function AdminRegister() {
 
   const labelStyle = {
     display: "block", fontSize: "11px", fontWeight: "600",
-    color: "#64748b", letterSpacing: "0.8px",
-    textTransform: "uppercase", marginBottom: "8px",
+    color: "#64748b", letterSpacing: "0.8px", textTransform: "uppercase", marginBottom: "8px",
   };
 
   return (
     <div style={{
-      minHeight: "100vh", background: "#0f172a", display: "flex",
-      alignItems: "center", justifyContent: "center",
+      minHeight: "100vh", background: "#0f172a",
+      display: "flex", alignItems: "center", justifyContent: "center",
       fontFamily: font, padding: "20px",
     }}>
-      {/* Background glow - amber for admin */}
       <div style={{
         position: "fixed", top: "20%", left: "50%", transform: "translateX(-50%)",
         width: "600px", height: "400px", borderRadius: "50%",
-        background: "radial-gradient(ellipse, rgba(245,158,11,0.06) 0%, transparent 70%)",
+        background: "radial-gradient(ellipse, rgba(245,158,11,0.07) 0%, transparent 70%)",
         pointerEvents: "none",
       }} />
 
@@ -74,26 +64,26 @@ export default function AdminRegister() {
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: "32px" }}>
           <div style={{
-            width: "52px", height: "52px", margin: "0 auto 16px",
+            width: "56px", height: "56px", margin: "0 auto 16px",
             background: "linear-gradient(135deg, #f59e0b, #ef4444)",
-            borderRadius: "14px", display: "flex", alignItems: "center",
-            justifyContent: "center", fontSize: "24px",
-            color: "white", boxShadow: "0 0 30px rgba(245,158,11,0.4)",
+            borderRadius: "16px", display: "flex", alignItems: "center",
+            justifyContent: "center", fontSize: "26px",
+            boxShadow: "0 0 30px rgba(245,158,11,0.4)",
           }}>🛡️</div>
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "6px",
             background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)",
-            borderRadius: "20px", padding: "4px 12px", marginBottom: "12px",
+            borderRadius: "20px", padding: "4px 14px", marginBottom: "12px",
           }}>
-            <span style={{ fontSize: "11px", color: "#f59e0b", fontWeight: "600", letterSpacing: "0.5px" }}>
-              ADMIN PORTAL
+            <span style={{ fontSize: "11px", color: "#f59e0b", fontWeight: "600", letterSpacing: "0.8px" }}>
+              ADMIN REGISTRATION
             </span>
           </div>
           <h1 style={{ fontSize: "22px", fontWeight: "700", color: "#f1f5f9", margin: "0 0 6px", letterSpacing: "-0.5px" }}>
-            Admin Registration
+            Create Admin Account
           </h1>
           <p style={{ fontSize: "13px", color: "#64748b", margin: 0 }}>
-            Restricted access — admin secret code required
+            Restricted — requires admin secret code
           </p>
         </div>
 
@@ -112,7 +102,6 @@ export default function AdminRegister() {
           )}
 
           <form onSubmit={handleSubmit}>
-            {/* Name */}
             <div style={{ marginBottom: "16px" }}>
               <label style={labelStyle}>Full Name</label>
               <input required style={inputStyle("name")} placeholder="Admin Name"
@@ -121,7 +110,6 @@ export default function AdminRegister() {
                 onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </div>
 
-            {/* Email */}
             <div style={{ marginBottom: "16px" }}>
               <label style={labelStyle}>Email Address</label>
               <input type="email" required style={inputStyle("email")} placeholder="admin@campus.edu"
@@ -130,7 +118,6 @@ export default function AdminRegister() {
                 onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </div>
 
-            {/* Password */}
             <div style={{ marginBottom: "16px" }}>
               <label style={labelStyle}>Password</label>
               <input type="password" required style={inputStyle("password")} placeholder="Min. 6 characters"
@@ -139,16 +126,15 @@ export default function AdminRegister() {
                 onChange={(e) => setForm({ ...form, password: e.target.value })} />
             </div>
 
-            {/* Admin Secret Code */}
-            <div style={{ marginBottom: "24px" }}>
+            <div style={{ marginBottom: "28px" }}>
               <label style={{ ...labelStyle, color: "#f59e0b" }}>Admin Secret Code</label>
               <input type="password" required style={inputStyle("adminCode")}
-                placeholder="Enter admin secret code"
+                placeholder="Enter secret code"
                 value={form.adminCode}
                 onFocus={() => setFocused("adminCode")} onBlur={() => setFocused("")}
                 onChange={(e) => setForm({ ...form, adminCode: e.target.value })} />
-              <p style={{ fontSize: "11px", color: "#475569", marginTop: "6px" }}>
-                🔒 Contact your system administrator to get the secret code
+              <p style={{ fontSize: "11px", color: "#475569", marginTop: "6px", margin: "6px 0 0" }}>
+                🔒 Contact your system administrator for the secret code
               </p>
             </div>
 
@@ -156,7 +142,8 @@ export default function AdminRegister() {
               width: "100%", padding: "13px",
               background: loading ? "#2d1f00" : "linear-gradient(135deg, #f59e0b, #ef4444)",
               border: "none", borderRadius: "10px", color: "white",
-              fontSize: "14px", fontWeight: "600", cursor: loading ? "not-allowed" : "pointer",
+              fontSize: "14px", fontWeight: "600",
+              cursor: loading ? "not-allowed" : "pointer",
               boxShadow: loading ? "none" : "0 0 20px rgba(245,158,11,0.35)",
               transition: "all 0.2s", fontFamily: font,
             }}>
@@ -170,17 +157,6 @@ export default function AdminRegister() {
               Sign in
             </Link>
           </p>
-
-          <div style={{
-            marginTop: "16px", paddingTop: "16px",
-            borderTop: "1px solid rgba(255,255,255,0.06)",
-            textAlign: "center",
-          }}>
-            <span style={{ fontSize: "12px", color: "#334155" }}>Are you a student? </span>
-            <Link to="/register" style={{ fontSize: "12px", color: "#64748b", textDecoration: "none", fontWeight: "600" }}>
-              Student Registration →
-            </Link>
-          </div>
         </div>
       </div>
     </div>

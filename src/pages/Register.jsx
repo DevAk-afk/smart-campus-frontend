@@ -4,12 +4,10 @@ import { registerUser } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 const font = "'Segoe UI', system-ui, sans-serif";
+const departments = ["Computer Science", "Mechanical", "Civil", "Electrical", "Electronics", "Other"];
 
 export default function Register() {
-  const [form, setForm] = useState({
-    name: "", email: "", password: "", role: "student",
-    rollNumber: "", department: "",
-  });
+  const [form, setForm] = useState({ name: "", email: "", password: "", rollNumber: "", department: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [focused, setFocused] = useState("");
@@ -32,8 +30,7 @@ export default function Register() {
   };
 
   const inputStyle = (field) => ({
-    width: "100%", padding: "12px 16px",
-    background: "#0f172a",
+    width: "100%", padding: "12px 16px", background: "#0f172a",
     border: focused === field ? "1px solid #38bdf8" : "1px solid rgba(255,255,255,0.08)",
     boxShadow: focused === field ? "0 0 0 3px rgba(56,189,248,0.1)" : "none",
     borderRadius: "10px", color: "#f1f5f9", fontSize: "14px",
@@ -42,23 +39,19 @@ export default function Register() {
 
   const labelStyle = {
     display: "block", fontSize: "11px", fontWeight: "600",
-    color: "#64748b", letterSpacing: "0.8px",
-    textTransform: "uppercase", marginBottom: "8px",
+    color: "#64748b", letterSpacing: "0.8px", textTransform: "uppercase", marginBottom: "8px",
   };
-
-  const departments = ["Computer Science", "Mechanical", "Civil", "Electrical", "Electronics", "Other"];
 
   return (
     <div style={{
-      minHeight: "100vh", background: "#0f172a", display: "flex",
-      alignItems: "center", justifyContent: "center",
+      minHeight: "100vh", background: "#0f172a",
+      display: "flex", alignItems: "center", justifyContent: "center",
       fontFamily: font, padding: "20px",
     }}>
-      {/* Background glow */}
       <div style={{
         position: "fixed", top: "20%", left: "50%", transform: "translateX(-50%)",
         width: "600px", height: "400px", borderRadius: "50%",
-        background: "radial-gradient(ellipse, rgba(56,189,248,0.06) 0%, transparent 70%)",
+        background: "radial-gradient(ellipse, rgba(56,189,248,0.07) 0%, transparent 70%)",
         pointerEvents: "none",
       }} />
 
@@ -67,26 +60,26 @@ export default function Register() {
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: "32px" }}>
           <div style={{
-            width: "52px", height: "52px", margin: "0 auto 16px",
+            width: "56px", height: "56px", margin: "0 auto 16px",
             background: "linear-gradient(135deg, #3b82f6, #06b6d4)",
-            borderRadius: "14px", display: "flex", alignItems: "center",
-            justifyContent: "center", fontSize: "24px", fontWeight: "700",
-            color: "white", boxShadow: "0 0 30px rgba(59,130,246,0.4)",
+            borderRadius: "16px", display: "flex", alignItems: "center",
+            justifyContent: "center", fontSize: "26px",
+            boxShadow: "0 0 30px rgba(59,130,246,0.4)",
           }}>🎓</div>
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "6px",
             background: "rgba(56,189,248,0.08)", border: "1px solid rgba(56,189,248,0.2)",
-            borderRadius: "20px", padding: "4px 12px", marginBottom: "12px",
+            borderRadius: "20px", padding: "4px 14px", marginBottom: "12px",
           }}>
-            <span style={{ fontSize: "11px", color: "#38bdf8", fontWeight: "600", letterSpacing: "0.5px" }}>
-              STUDENT PORTAL
+            <span style={{ fontSize: "11px", color: "#38bdf8", fontWeight: "600", letterSpacing: "0.8px" }}>
+              STUDENT REGISTRATION
             </span>
           </div>
           <h1 style={{ fontSize: "22px", fontWeight: "700", color: "#f1f5f9", margin: "0 0 6px", letterSpacing: "-0.5px" }}>
-            Student Registration
+            Create Student Account
           </h1>
           <p style={{ fontSize: "13px", color: "#64748b", margin: 0 }}>
-            Create your student account to file complaints
+            Register to file and track your complaints
           </p>
         </div>
 
@@ -105,7 +98,6 @@ export default function Register() {
           )}
 
           <form onSubmit={handleSubmit}>
-            {/* Name */}
             <div style={{ marginBottom: "16px" }}>
               <label style={labelStyle}>Full Name</label>
               <input required style={inputStyle("name")} placeholder="John Doe"
@@ -114,7 +106,6 @@ export default function Register() {
                 onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </div>
 
-            {/* Email */}
             <div style={{ marginBottom: "16px" }}>
               <label style={labelStyle}>Email Address</label>
               <input type="email" required style={inputStyle("email")} placeholder="you@campus.edu"
@@ -123,11 +114,10 @@ export default function Register() {
                 onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </div>
 
-            {/* Roll + Department */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
               <div>
                 <label style={labelStyle}>Roll Number</label>
-                <input style={inputStyle("roll")} placeholder="e.g. CS21B001"
+                <input style={inputStyle("roll")} placeholder="e.g. CS21001"
                   value={form.rollNumber}
                   onFocus={() => setFocused("roll")} onBlur={() => setFocused("")}
                   onChange={(e) => setForm({ ...form, rollNumber: e.target.value })} />
@@ -143,8 +133,7 @@ export default function Register() {
               </div>
             </div>
 
-            {/* Password */}
-            <div style={{ marginBottom: "24px" }}>
+            <div style={{ marginBottom: "28px" }}>
               <label style={labelStyle}>Password</label>
               <input type="password" required style={inputStyle("password")} placeholder="Min. 6 characters"
                 value={form.password}
@@ -156,7 +145,8 @@ export default function Register() {
               width: "100%", padding: "13px",
               background: loading ? "#1e3a5f" : "linear-gradient(135deg, #3b82f6, #06b6d4)",
               border: "none", borderRadius: "10px", color: "white",
-              fontSize: "14px", fontWeight: "600", cursor: loading ? "not-allowed" : "pointer",
+              fontSize: "14px", fontWeight: "600",
+              cursor: loading ? "not-allowed" : "pointer",
               boxShadow: loading ? "none" : "0 0 20px rgba(59,130,246,0.35)",
               transition: "all 0.2s", fontFamily: font,
             }}>
@@ -170,17 +160,6 @@ export default function Register() {
               Sign in
             </Link>
           </p>
-
-          <div style={{
-            marginTop: "16px", paddingTop: "16px",
-            borderTop: "1px solid rgba(255,255,255,0.06)",
-            textAlign: "center",
-          }}>
-            <span style={{ fontSize: "12px", color: "#334155" }}>Are you an admin? </span>
-            <Link to="/admin-register" style={{ fontSize: "12px", color: "#64748b", textDecoration: "none", fontWeight: "600" }}>
-              Admin Registration →
-            </Link>
-          </div>
         </div>
       </div>
     </div>

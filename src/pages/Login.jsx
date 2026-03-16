@@ -22,7 +22,7 @@ export default function Login() {
       login(data);
       navigate(data.role === "admin" ? "/admin" : "/dashboard");
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed");
+      setError(err.response?.data?.message || "Invalid email or password");
     } finally {
       setLoading(false);
     }
@@ -39,8 +39,8 @@ export default function Login() {
 
   return (
     <div style={{
-      minHeight: "100vh", background: "#0f172a", display: "flex",
-      alignItems: "center", justifyContent: "center",
+      minHeight: "100vh", background: "#0f172a",
+      display: "flex", alignItems: "center", justifyContent: "center",
       fontFamily: font, padding: "20px",
     }}>
       <div style={{
@@ -51,20 +51,21 @@ export default function Login() {
       }} />
 
       <div style={{ width: "100%", maxWidth: "420px", position: "relative" }}>
+
         {/* Logo */}
-        <div style={{ textAlign: "center", marginBottom: "40px" }}>
+        <div style={{ textAlign: "center", marginBottom: "36px" }}>
           <div style={{
-            width: "52px", height: "52px", margin: "0 auto 16px",
+            width: "56px", height: "56px", margin: "0 auto 16px",
             background: "linear-gradient(135deg, #3b82f6, #06b6d4)",
-            borderRadius: "14px", display: "flex", alignItems: "center",
-            justifyContent: "center", fontSize: "24px", fontWeight: "700",
+            borderRadius: "16px", display: "flex", alignItems: "center",
+            justifyContent: "center", fontSize: "26px", fontWeight: "700",
             color: "white", boxShadow: "0 0 30px rgba(59,130,246,0.4)",
           }}>S</div>
-          <h1 style={{ fontSize: "22px", fontWeight: "700", color: "#f1f5f9", margin: "0 0 6px", letterSpacing: "-0.5px" }}>
-            Welcome back
+          <h1 style={{ fontSize: "24px", fontWeight: "700", color: "#f1f5f9", margin: "0 0 6px", letterSpacing: "-0.5px" }}>
+            Smart Campus System
           </h1>
           <p style={{ fontSize: "13px", color: "#64748b", margin: 0 }}>
-            Sign in to Smart Campus System
+            Sign in to your account
           </p>
         </div>
 
@@ -87,18 +88,18 @@ export default function Login() {
               <label style={{ display: "block", fontSize: "11px", fontWeight: "600", color: "#64748b", letterSpacing: "0.8px", textTransform: "uppercase", marginBottom: "8px" }}>
                 Email Address
               </label>
-              <input type="email" required style={inputStyle("email")} placeholder="you@campus.edu"
-                value={form.email}
+              <input type="email" required style={inputStyle("email")}
+                placeholder="you@campus.edu" value={form.email}
                 onFocus={() => setFocused("email")} onBlur={() => setFocused("")}
                 onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </div>
 
-            <div style={{ marginBottom: "24px" }}>
+            <div style={{ marginBottom: "28px" }}>
               <label style={{ display: "block", fontSize: "11px", fontWeight: "600", color: "#64748b", letterSpacing: "0.8px", textTransform: "uppercase", marginBottom: "8px" }}>
                 Password
               </label>
-              <input type="password" required style={inputStyle("password")} placeholder="••••••••"
-                value={form.password}
+              <input type="password" required style={inputStyle("password")}
+                placeholder="••••••••" value={form.password}
                 onFocus={() => setFocused("password")} onBlur={() => setFocused("")}
                 onChange={(e) => setForm({ ...form, password: e.target.value })} />
             </div>
@@ -107,7 +108,8 @@ export default function Login() {
               width: "100%", padding: "13px",
               background: loading ? "#1e3a5f" : "linear-gradient(135deg, #3b82f6, #06b6d4)",
               border: "none", borderRadius: "10px", color: "white",
-              fontSize: "14px", fontWeight: "600", cursor: loading ? "not-allowed" : "pointer",
+              fontSize: "14px", fontWeight: "600",
+              cursor: loading ? "not-allowed" : "pointer",
               boxShadow: loading ? "none" : "0 0 20px rgba(59,130,246,0.35)",
               transition: "all 0.2s", fontFamily: font,
             }}>
@@ -117,34 +119,34 @@ export default function Login() {
 
           {/* Register links */}
           <div style={{
-            marginTop: "20px", paddingTop: "20px",
+            marginTop: "24px", paddingTop: "20px",
             borderTop: "1px solid rgba(255,255,255,0.06)",
-            display: "flex", justifyContent: "space-between", alignItems: "center",
           }}>
-            <div>
-              <p style={{ fontSize: "12px", color: "#475569", margin: "0 0 6px" }}>New student?</p>
+            <p style={{ fontSize: "12px", color: "#475569", textAlign: "center", marginBottom: "12px" }}>
+              Don't have an account? Register as:
+            </p>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
               <Link to="/register" style={{
-                display: "inline-flex", alignItems: "center", gap: "6px",
-                padding: "7px 14px",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+                padding: "10px",
                 background: "rgba(56,189,248,0.08)",
                 border: "1px solid rgba(56,189,248,0.2)",
-                borderRadius: "8px", color: "#38bdf8",
-                fontSize: "12px", fontWeight: "600", textDecoration: "none",
+                borderRadius: "10px", color: "#38bdf8",
+                fontSize: "13px", fontWeight: "600", textDecoration: "none",
+                transition: "all 0.2s",
               }}>
-                🎓 Student Register
+                🎓 Student
               </Link>
-            </div>
-            <div style={{ textAlign: "right" }}>
-              <p style={{ fontSize: "12px", color: "#475569", margin: "0 0 6px" }}>Admin access?</p>
               <Link to="/admin-register" style={{
-                display: "inline-flex", alignItems: "center", gap: "6px",
-                padding: "7px 14px",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+                padding: "10px",
                 background: "rgba(245,158,11,0.08)",
                 border: "1px solid rgba(245,158,11,0.2)",
-                borderRadius: "8px", color: "#f59e0b",
-                fontSize: "12px", fontWeight: "600", textDecoration: "none",
+                borderRadius: "10px", color: "#f59e0b",
+                fontSize: "13px", fontWeight: "600", textDecoration: "none",
+                transition: "all 0.2s",
               }}>
-                🛡️ Admin Register
+                🛡️ Admin
               </Link>
             </div>
           </div>
