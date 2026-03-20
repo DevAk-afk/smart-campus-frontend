@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { getAnalytics, getComplaints, updateComplaintStatus } from "../services/api";
+import { getAnalytics, getComplaints, updateComplaintStatus, deleteComplaint } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 const font = "'Segoe UI', system-ui, sans-serif";
 const BACKEND_URL = "https://smart-campus-backend-ggrp.onrender.com";
-const POLL_INTERVAL = 10000; // auto-refresh every 10 seconds
+const POLL_INTERVAL = 10000;
 
 const STATUS_COLORS = { Pending: "#f59e0b", "In Progress": "#38bdf8", Resolved: "#10b981", Rejected: "#ef4444" };
 const CHART_COLORS = ["#3b82f6", "#06b6d4", "#8b5cf6", "#f59e0b", "#10b981", "#ef4444", "#ec4899"];
@@ -38,6 +38,35 @@ const Tip = ({ active, payload, label }) => {
   );
 };
 
+// Per-card delete with inline confirmation
+function DeleteButton({ complaint, onDelete, deleting }) {
+  const [confirm, setConfirm] = useState(false);
+  const isDeleting = deleting === complaint._id;
+
+  if (confirm) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "8px", padding: "5px 10px" }}>
+        <span style={{ fontSize: "11px", color: "#f87171" }}>Sure?</span>
+        <button onClick={() => { onDelete(complaint._id); setConfirm(false); }} disabled={isDeleting}
+          style={{ padding: "3px 10px", background: "rgba(239,68,68,0.2)", border: "1px solid rgba(239,68,68,0.4)", borderRadius: "6px", color: "#f87171", fontSize: "11px", fontWeight: "600", cursor: "pointer", fontFamily: font }}>
+          {isDeleting ? "..." : "Yes, Delete"}
+        </button>
+        <button onClick={() => setConfirm(false)}
+          style={{ padding: "3px 8px", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#64748b", fontSize: "11px", cursor: "pointer", fontFamily: font }}>
+          Cancel
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button onClick={() => setConfirm(true)} disabled={isDeleting}
+      style={{ padding: "5px 12px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "7px", color: "#f87171", fontSize: "11px", fontWeight: "500", cursor: "pointer", fontFamily: font, display: "flex", alignItems: "center", gap: "4px" }}>
+      🗑️ Delete
+    </button>
+  );
+}
+
 function StatusActions({ complaint, onUpdate, updating }) {
   const current = complaint.status;
   const isUpdating = updating === complaint._id;
@@ -49,8 +78,8 @@ function StatusActions({ complaint, onUpdate, updating }) {
   ].filter(a => a.show);
 
   return (
-    <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "10px", paddingTop: "10px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-      <span style={{ fontSize: "10px", color: "#475569", alignSelf: "center" }}>Actions:</span>
+    <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
+      <span style={{ fontSize: "10px", color: "#475569" }}>Actions:</span>
       {actions.map(({ label, status, color, bg, border }) => (
         <button key={status} disabled={isUpdating} onClick={() => onUpdate(complaint._id, status)}
           style={{ padding: "5px 12px", background: bg, border: `1px solid ${border}`, borderRadius: "7px", color, fontSize: "11px", fontWeight: "600", cursor: isUpdating ? "not-allowed" : "pointer", opacity: isUpdating ? 0.5 : 1, fontFamily: font }}>
@@ -67,6 +96,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("complaints");
   const [updatingId, setUpdatingId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
   const [filterStatus, setFilterStatus] = useState("All");
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState(null);
@@ -78,12 +108,9 @@ export default function AdminDashboard() {
 
   const showToast = (msg, color) => { setToast({ msg, color }); setTimeout(() => setToast(null), 3000); };
 
-  // Fetch complaints silently (no loading spinner on refresh)
   const fetchComplaints = useCallback(async (silent = false) => {
     try {
       const { data } = await getComplaints();
-
-      // Detect new complaints since last fetch
       if (prevCountRef.current > 0 && data.length > prevCountRef.current) {
         const diff = data.length - prevCountRef.current;
         setNewCount(diff);
@@ -91,38 +118,22 @@ export default function AdminDashboard() {
         setTimeout(() => setNewCount(0), 5000);
       }
       prevCountRef.current = data.length;
-
       setComplaints(data);
       setLastUpdated(new Date());
-    } catch (err) {
-      console.error("Poll error:", err);
-    } finally {
-      if (!silent) setLoading(false);
-    }
+    } catch (err) { console.error("Poll error:", err); }
+    finally { if (!silent) setLoading(false); }
   }, []);
 
   const fetchAnalytics = useCallback(async () => {
-    try {
-      const { data } = await getAnalytics();
-      setAnalytics(data);
-    } catch (err) {
-      console.error("Analytics error:", err);
-    }
+    try { const { data } = await getAnalytics(); setAnalytics(data); }
+    catch (err) { console.error(err); }
   }, []);
 
-  // Initial load
-  useEffect(() => {
-    fetchComplaints(false);
-    fetchAnalytics();
-  }, [fetchComplaints, fetchAnalytics]);
+  useEffect(() => { fetchComplaints(false); fetchAnalytics(); }, [fetchComplaints, fetchAnalytics]);
 
-  // Auto-refresh polling every 10 seconds
   useEffect(() => {
-    const interval = setInterval(() => {
-      fetchComplaints(true);
-      fetchAnalytics();
-    }, POLL_INTERVAL);
-    return () => clearInterval(interval); // cleanup on unmount
+    const interval = setInterval(() => { fetchComplaints(true); fetchAnalytics(); }, POLL_INTERVAL);
+    return () => clearInterval(interval);
   }, [fetchComplaints, fetchAnalytics]);
 
   const handleStatusUpdate = async (id, status) => {
@@ -130,14 +141,22 @@ export default function AdminDashboard() {
     try {
       await updateComplaintStatus(id, status);
       setComplaints(prev => prev.map(c => c._id === id ? { ...c, status } : c));
-      showToast(
-        status === "Resolved" ? "✓ Resolved" :
-        status === "Rejected" ? "✕ Rejected" :
-        status === "In Progress" ? "⟳ In Progress" : "↺ Reopened",
-        STATUS_COLORS[status]
-      );
+      showToast(status === "Resolved" ? "✓ Resolved" : status === "Rejected" ? "✕ Rejected" : status === "In Progress" ? "⟳ In Progress" : "↺ Reopened", STATUS_COLORS[status]);
     } catch { showToast("Failed to update", "#ef4444"); }
     finally { setUpdatingId(null); }
+  };
+
+  const handleDelete = async (id) => {
+    setDeletingId(id);
+    try {
+      await deleteComplaint(id);
+      setComplaints(prev => prev.filter(c => c._id !== id));
+      showToast("🗑️ Complaint deleted", "#64748b");
+    } catch (err) {
+      showToast(err.response?.data?.message || "Failed to delete", "#ef4444");
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const statuses = ["All", "Pending", "In Progress", "Resolved", "Rejected"];
@@ -149,20 +168,14 @@ export default function AdminDashboard() {
   const byStatus = analytics?.byStatus?.map(s => ({ name: s._id, value: s.count })) || [];
   const byCategory = analytics?.byCategory?.map(c => ({ name: c._id, value: c.count })) || [];
   const trend = analytics?.recent?.map(r => ({ date: r._id?.slice(5), count: r.count })) || [];
-
   const formatTime = (date) => date?.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
-  if (loading) return (
-    <div style={{ minHeight: "100vh", background: "#0f172a", display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b", fontFamily: font }}>
-      Loading...
-    </div>
-  );
+  if (loading) return <div style={{ minHeight: "100vh", background: "#0f172a", display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b", fontFamily: font }}>Loading...</div>;
 
   return (
     <div style={{ minHeight: "100vh", background: "#0f172a", fontFamily: font, padding: "20px 16px", color: "#f1f5f9" }}>
       <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
 
-        {/* Toast */}
         {toast && (
           <div style={{ position: "fixed", top: "70px", right: "16px", zIndex: 999, background: "#1e293b", border: `1px solid ${toast.color}`, borderRadius: "10px", padding: "10px 18px", color: toast.color, fontSize: "13px", fontWeight: "600", boxShadow: "0 10px 30px rgba(0,0,0,0.4)", maxWidth: "280px" }}>
             {toast.msg}
@@ -174,48 +187,32 @@ export default function AdminDashboard() {
           <div>
             <h1 style={{ fontSize: "20px", fontWeight: "700", margin: "0 0 3px", letterSpacing: "-0.5px" }}>Admin Dashboard</h1>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-              <p style={{ fontSize: "12px", color: "#64748b", margin: 0 }}>
-                Welcome, <span style={{ color: "#94a3b8", fontWeight: "500" }}>{user?.name}</span> 🛡️
-              </p>
-              {/* Live indicator */}
+              <p style={{ fontSize: "12px", color: "#64748b", margin: 0 }}>Welcome, <span style={{ color: "#94a3b8", fontWeight: "500" }}>{user?.name}</span> 🛡️</p>
               <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#10b981", boxShadow: "0 0 6px #10b981", animation: "pulse 2s infinite" }} />
+                <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#10b981", boxShadow: "0 0 6px #10b981" }} />
                 <span style={{ fontSize: "10px", color: "#10b981", fontWeight: "600" }}>LIVE</span>
                 {lastUpdated && <span style={{ fontSize: "10px", color: "#334155" }}>· {formatTime(lastUpdated)}</span>}
               </div>
             </div>
           </div>
-
           <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            {/* Manual refresh button */}
             <button onClick={() => { fetchComplaints(true); fetchAnalytics(); }}
               style={{ padding: "8px 12px", background: "rgba(56,189,248,0.08)", border: "1px solid rgba(56,189,248,0.2)", borderRadius: "8px", color: "#38bdf8", fontSize: "12px", cursor: "pointer", fontFamily: font }}>
               ↻ Refresh
             </button>
             <button onClick={() => { logout(); navigate("/login"); }}
-              style={{ padding: "9px 14px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "9px", color: "#f87171", fontSize: "13px", cursor: "pointer", fontFamily: font, whiteSpace: "nowrap" }}>
+              style={{ padding: "9px 14px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "9px", color: "#f87171", fontSize: "13px", cursor: "pointer", fontFamily: font }}>
               🚪 Logout
             </button>
           </div>
         </div>
 
-        {/* New complaint alert banner */}
         {newCount > 0 && (
           <div style={{ background: "rgba(56,189,248,0.08)", border: "1px solid rgba(56,189,248,0.25)", borderRadius: "10px", padding: "12px 16px", marginBottom: "16px", display: "flex", alignItems: "center", gap: "10px" }}>
             <span style={{ fontSize: "18px" }}>🔔</span>
-            <span style={{ fontSize: "13px", color: "#38bdf8", fontWeight: "600" }}>
-              {newCount} new complaint{newCount > 1 ? "s" : ""} just arrived!
-            </span>
+            <span style={{ fontSize: "13px", color: "#38bdf8", fontWeight: "600" }}>{newCount} new complaint{newCount > 1 ? "s" : ""} just arrived!</span>
           </div>
         )}
-
-        {/* Auto-refresh notice */}
-        <div style={{ background: "#1e293b", borderRadius: "8px", padding: "8px 14px", marginBottom: "20px", display: "flex", alignItems: "center", gap: "8px", border: "1px solid rgba(255,255,255,0.04)" }}>
-          <div style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#10b981", flexShrink: 0 }} />
-          <span style={{ fontSize: "11px", color: "#475569" }}>
-            Auto-refreshing every 10 seconds — new complaints appear automatically without page reload
-          </span>
-        </div>
 
         {/* KPI Cards */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: "10px", marginBottom: "20px" }}>
@@ -282,15 +279,20 @@ export default function AdminDashboard() {
                           <StatusBadge status={c.status} />
                         </div>
                         <p style={{ margin: "6px 0 8px", fontSize: "12px", color: "#64748b", lineHeight: "1.5" }}>{c.description}</p>
-                        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+                        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center", marginBottom: "10px" }}>
                           <span style={{ fontSize: "11px", color: "#475569" }}>📍 {c.location}</span>
                           <span style={{ fontSize: "11px", color: "#475569" }}>🏷️ {c.category}</span>
                           <span style={{ fontSize: "11px", color: "#475569" }}>📅 {new Date(c.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
                           {c.image && <a href={`${BACKEND_URL}${c.image}`} target="_blank" rel="noreferrer"><img src={`${BACKEND_URL}${c.image}`} alt="" style={{ width: "32px", height: "32px", borderRadius: "5px", objectFit: "cover", border: "1px solid rgba(255,255,255,0.1)" }} /></a>}
                         </div>
+
+                        {/* Actions row — status buttons + delete */}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", paddingTop: "10px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                          <StatusActions complaint={c} onUpdate={handleStatusUpdate} updating={updatingId} />
+                          <DeleteButton complaint={c} onDelete={handleDelete} deleting={deletingId} />
+                        </div>
                       </div>
                     </div>
-                    <StatusActions complaint={c} onUpdate={handleStatusUpdate} updating={updatingId} />
                   </div>
                 ))}
               </div>
@@ -342,12 +344,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        <style>{`
-          @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-          }
-        `}</style>
+        <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
       </div>
     </div>
   );

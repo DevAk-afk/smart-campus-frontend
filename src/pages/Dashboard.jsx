@@ -7,21 +7,48 @@ const font = "'Segoe UI', system-ui, sans-serif";
 const BACKEND_URL = "https://smart-campus-backend-ggrp.onrender.com";
 
 const statusCfg = {
-  Pending:       { color: "#f59e0b", bg: "rgba(245,158,11,0.1)",  border: "rgba(245,158,11,0.25)",  icon: "⏳", message: "Awaiting admin review." },
-  "In Progress": { color: "#38bdf8", bg: "rgba(56,189,248,0.1)",  border: "rgba(56,189,248,0.25)",  icon: "⚙️", message: "Admin is working on this." },
-  Resolved:      { color: "#10b981", bg: "rgba(16,185,129,0.1)",  border: "rgba(16,185,129,0.25)",  icon: "✅", message: "Your complaint has been resolved!" },
-  Rejected:      { color: "#ef4444", bg: "rgba(239,68,68,0.1)",   border: "rgba(239,68,68,0.25)",   icon: "❌", message: "Complaint was rejected by admin." },
+  Pending:       { color: "#f59e0b", bg: "rgba(245,158,11,0.1)", border: "rgba(245,158,11,0.25)", icon: "⏳", message: "Awaiting admin review." },
+  "In Progress": { color: "#38bdf8", bg: "rgba(56,189,248,0.1)", border: "rgba(56,189,248,0.25)", icon: "⚙️", message: "Admin is working on this." },
+  Resolved:      { color: "#10b981", bg: "rgba(16,185,129,0.1)", border: "rgba(16,185,129,0.25)", icon: "✅", message: "Your complaint has been resolved!" },
+  Rejected:      { color: "#ef4444", bg: "rgba(239,68,68,0.1)", border: "rgba(239,68,68,0.25)", icon: "❌", message: "Complaint was rejected by admin." },
 };
-
 const catIcons = { Maintenance: "🔧", Cleanliness: "🧹", Security: "🔒", "IT Support": "💻", Hostel: "🏠", Canteen: "🍽️", Other: "📋" };
 
 function StatusBadge({ status }) {
   const cfg = statusCfg[status] || statusCfg.Pending;
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "3px 10px", borderRadius: "20px", fontSize: "10px", fontWeight: "600", color: cfg.color, background: cfg.bg, border: `1px solid ${cfg.border}`, textTransform: "uppercase", letterSpacing: "0.3px", whiteSpace: "nowrap" }}>
-      <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: cfg.color, display: "inline-block", flexShrink: 0 }} />
-      {status}
+    <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "3px 10px", borderRadius: "20px", fontSize: "10px", fontWeight: "600", color: cfg.color, background: cfg.bg, border: `1px solid ${cfg.border}`, textTransform: "uppercase", whiteSpace: "nowrap" }}>
+      <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: cfg.color, display: "inline-block", flexShrink: 0 }} />{status}
     </span>
+  );
+}
+
+// Per-card delete confirmation UI
+function DeleteButton({ complaint, onDelete, deleting }) {
+  const [confirm, setConfirm] = useState(false);
+  const isDeleting = deleting === complaint._id;
+
+  if (confirm) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "8px", padding: "5px 10px" }}>
+        <span style={{ fontSize: "11px", color: "#f87171" }}>Sure?</span>
+        <button onClick={() => { onDelete(complaint._id); setConfirm(false); }} disabled={isDeleting}
+          style={{ padding: "3px 10px", background: "rgba(239,68,68,0.2)", border: "1px solid rgba(239,68,68,0.4)", borderRadius: "6px", color: "#f87171", fontSize: "11px", fontWeight: "600", cursor: "pointer", fontFamily: font }}>
+          {isDeleting ? "..." : "Yes, Delete"}
+        </button>
+        <button onClick={() => setConfirm(false)}
+          style={{ padding: "3px 8px", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#64748b", fontSize: "11px", cursor: "pointer", fontFamily: font }}>
+          Cancel
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button onClick={() => setConfirm(true)} disabled={isDeleting}
+      style={{ padding: "5px 12px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "7px", color: "#f87171", fontSize: "11px", fontWeight: "500", cursor: "pointer", fontFamily: font, display: "flex", alignItems: "center", gap: "4px" }}>
+      🗑️ Delete
+    </button>
   );
 }
 
@@ -30,6 +57,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
+  const [deletingId, setDeletingId] = useState(null);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -41,9 +69,15 @@ export default function Dashboard() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this complaint?")) return;
-    await deleteComplaint(id);
-    setComplaints(complaints.filter(c => c._id !== id));
+    setDeletingId(id);
+    try {
+      await deleteComplaint(id);
+      setComplaints(prev => prev.filter(c => c._id !== id));
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to delete");
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const statuses = ["All", "Pending", "In Progress", "Resolved", "Rejected"];
@@ -69,7 +103,7 @@ export default function Dashboard() {
             <Link to="/create" style={{ padding: "9px 16px", background: "linear-gradient(135deg, #3b82f6, #06b6d4)", borderRadius: "9px", color: "white", fontSize: "13px", fontWeight: "600", textDecoration: "none", whiteSpace: "nowrap" }}>
               + New Complaint
             </Link>
-            <button onClick={() => { logout(); navigate("/login"); }} style={{ padding: "9px 14px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "9px", color: "#f87171", fontSize: "13px", cursor: "pointer", fontFamily: font, whiteSpace: "nowrap" }}>
+            <button onClick={() => { logout(); navigate("/login"); }} style={{ padding: "9px 14px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "9px", color: "#f87171", fontSize: "13px", cursor: "pointer", fontFamily: font }}>
               🚪 Logout
             </button>
           </div>
@@ -85,7 +119,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Stats — 2 cols on mobile, 4 on desktop */}
+        {/* Stats */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: "10px", marginBottom: "20px" }}>
           {[
             { label: "Total", val: counts.All, color: "#f1f5f9" },
@@ -110,11 +144,10 @@ export default function Dashboard() {
             ))}
           </div>
           <input style={{ width: "100%", padding: "9px 14px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", color: "#f1f5f9", fontSize: "13px", outline: "none", boxSizing: "border-box", fontFamily: font }}
-            placeholder="🔍  Search complaints..."
-            value={search} onChange={e => setSearch(e.target.value)} />
+            placeholder="🔍  Search complaints..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
 
-        {/* List */}
+        {/* Complaint Cards */}
         {loading ? (
           <div style={{ textAlign: "center", padding: "50px", color: "#475569" }}>Loading...</div>
         ) : filtered.length === 0 ? (
@@ -141,24 +174,25 @@ export default function Dashboard() {
                       <p style={{ margin: "0 0 8px", fontSize: "12px", color: "#64748b", lineHeight: "1.5" }}>
                         {c.description.length > 100 ? c.description.slice(0, 100) + "..." : c.description}
                       </p>
-                      <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "6px" }}>
+                      <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "10px" }}>
                         <span style={{ fontSize: "11px", color: "#475569" }}>📍 {c.location}</span>
                         <span style={{ fontSize: "11px", color: "#475569" }}>🏷️ {c.category}</span>
                         <span style={{ fontSize: "11px", color: "#475569" }}>📅 {formatDate(c.createdAt)}</span>
                       </div>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "11px", color: cfg.color }}>
+
+                      {/* Bottom row — status message + image + delete */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", paddingTop: "10px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "11px", color: cfg.color }}>
                           <span>{cfg.icon}</span><span>{cfg.message}</span>
                         </div>
-                        <div style={{ display: "flex", gap: "6px", alignItems: "center", flexShrink: 0 }}>
+                        <div style={{ display: "flex", gap: "8px", alignItems: "center", flexShrink: 0 }}>
                           {c.image && (
                             <a href={`${BACKEND_URL}${c.image}`} target="_blank" rel="noreferrer">
                               <img src={`${BACKEND_URL}${c.image}`} alt="" style={{ width: "32px", height: "32px", borderRadius: "5px", objectFit: "cover", border: "1px solid rgba(255,255,255,0.1)" }} />
                             </a>
                           )}
-                          {c.status === "Pending" && (
-                            <button onClick={() => handleDelete(c._id)} style={{ padding: "4px 9px", fontSize: "11px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "6px", color: "#f87171", cursor: "pointer", fontFamily: font }}>Delete</button>
-                          )}
+                          {/* Delete button on every card */}
+                          <DeleteButton complaint={c} onDelete={handleDelete} deleting={deletingId} />
                         </div>
                       </div>
                     </div>
