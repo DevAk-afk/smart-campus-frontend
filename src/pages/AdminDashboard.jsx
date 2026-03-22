@@ -38,7 +38,6 @@ const Tip = ({ active, payload, label }) => {
   );
 };
 
-// Per-card delete with inline confirmation
 function DeleteButton({ complaint, onDelete, deleting }) {
   const [confirm, setConfirm] = useState(false);
   const isDeleting = deleting === complaint._id;
@@ -49,11 +48,11 @@ function DeleteButton({ complaint, onDelete, deleting }) {
         <span style={{ fontSize: "11px", color: "#f87171" }}>Sure?</span>
         <button onClick={() => { onDelete(complaint._id); setConfirm(false); }} disabled={isDeleting}
           style={{ padding: "3px 10px", background: "rgba(239,68,68,0.2)", border: "1px solid rgba(239,68,68,0.4)", borderRadius: "6px", color: "#f87171", fontSize: "11px", fontWeight: "600", cursor: "pointer", fontFamily: font }}>
-          {isDeleting ? "..." : "Yes, Delete"}
+          {isDeleting ? "..." : "Yes"}
         </button>
         <button onClick={() => setConfirm(false)}
           style={{ padding: "3px 8px", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#64748b", fontSize: "11px", cursor: "pointer", fontFamily: font }}>
-          Cancel
+          No
         </button>
       </div>
     );
@@ -103,8 +102,7 @@ export default function AdminDashboard() {
   const [lastUpdated, setLastUpdated] = useState(null);
   const [newCount, setNewCount] = useState(0);
   const prevCountRef = useRef(0);
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
 
   const showToast = (msg, color) => { setToast({ msg, color }); setTimeout(() => setToast(null), 3000); };
 
@@ -120,7 +118,7 @@ export default function AdminDashboard() {
       prevCountRef.current = data.length;
       setComplaints(data);
       setLastUpdated(new Date());
-    } catch (err) { console.error("Poll error:", err); }
+    } catch (err) { console.error(err); }
     finally { if (!silent) setLoading(false); }
   }, []);
 
@@ -154,9 +152,7 @@ export default function AdminDashboard() {
       showToast("🗑️ Complaint deleted", "#64748b");
     } catch (err) {
       showToast(err.response?.data?.message || "Failed to delete", "#ef4444");
-    } finally {
-      setDeletingId(null);
-    }
+    } finally { setDeletingId(null); }
   };
 
   const statuses = ["All", "Pending", "In Progress", "Resolved", "Rejected"];
@@ -182,12 +178,14 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Header */}
+        {/* Header — no logout button */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px", flexWrap: "wrap", gap: "12px" }}>
           <div>
             <h1 style={{ fontSize: "20px", fontWeight: "700", margin: "0 0 3px", letterSpacing: "-0.5px" }}>Admin Dashboard</h1>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-              <p style={{ fontSize: "12px", color: "#64748b", margin: 0 }}>Welcome, <span style={{ color: "#94a3b8", fontWeight: "500" }}>{user?.name}</span> 🛡️</p>
+              <p style={{ fontSize: "12px", color: "#64748b", margin: 0 }}>
+                Welcome, <span style={{ color: "#94a3b8", fontWeight: "500" }}>{user?.name}</span> 🛡️
+              </p>
               <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                 <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#10b981", boxShadow: "0 0 6px #10b981" }} />
                 <span style={{ fontSize: "10px", color: "#10b981", fontWeight: "600" }}>LIVE</span>
@@ -195,16 +193,11 @@ export default function AdminDashboard() {
               </div>
             </div>
           </div>
-          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            <button onClick={() => { fetchComplaints(true); fetchAnalytics(); }}
-              style={{ padding: "8px 12px", background: "rgba(56,189,248,0.08)", border: "1px solid rgba(56,189,248,0.2)", borderRadius: "8px", color: "#38bdf8", fontSize: "12px", cursor: "pointer", fontFamily: font }}>
-              ↻ Refresh
-            </button>
-            <button onClick={() => { logout(); navigate("/login"); }}
-              style={{ padding: "9px 14px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "9px", color: "#f87171", fontSize: "13px", cursor: "pointer", fontFamily: font }}>
-              🚪 Logout
-            </button>
-          </div>
+          {/* Only manual refresh — no logout */}
+          <button onClick={() => { fetchComplaints(true); fetchAnalytics(); }}
+            style={{ padding: "8px 14px", background: "rgba(56,189,248,0.08)", border: "1px solid rgba(56,189,248,0.2)", borderRadius: "8px", color: "#38bdf8", fontSize: "12px", cursor: "pointer", fontFamily: font }}>
+            ↻ Refresh
+          </button>
         </div>
 
         {newCount > 0 && (
@@ -285,8 +278,7 @@ export default function AdminDashboard() {
                           <span style={{ fontSize: "11px", color: "#475569" }}>📅 {new Date(c.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
                           {c.image && <a href={`${BACKEND_URL}${c.image}`} target="_blank" rel="noreferrer"><img src={`${BACKEND_URL}${c.image}`} alt="" style={{ width: "32px", height: "32px", borderRadius: "5px", objectFit: "cover", border: "1px solid rgba(255,255,255,0.1)" }} /></a>}
                         </div>
-
-                        {/* Actions row — status buttons + delete */}
+                        {/* Actions + Delete */}
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", paddingTop: "10px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
                           <StatusActions complaint={c} onUpdate={handleStatusUpdate} updating={updatingId} />
                           <DeleteButton complaint={c} onDelete={handleDelete} deleting={deletingId} />
@@ -343,7 +335,6 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
-
         <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
       </div>
     </div>

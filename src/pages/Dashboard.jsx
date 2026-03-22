@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { getComplaints, deleteComplaint } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
@@ -23,7 +23,6 @@ function StatusBadge({ status }) {
   );
 }
 
-// Per-card delete confirmation UI
 function DeleteButton({ complaint, onDelete, deleting }) {
   const [confirm, setConfirm] = useState(false);
   const isDeleting = deleting === complaint._id;
@@ -34,11 +33,11 @@ function DeleteButton({ complaint, onDelete, deleting }) {
         <span style={{ fontSize: "11px", color: "#f87171" }}>Sure?</span>
         <button onClick={() => { onDelete(complaint._id); setConfirm(false); }} disabled={isDeleting}
           style={{ padding: "3px 10px", background: "rgba(239,68,68,0.2)", border: "1px solid rgba(239,68,68,0.4)", borderRadius: "6px", color: "#f87171", fontSize: "11px", fontWeight: "600", cursor: "pointer", fontFamily: font }}>
-          {isDeleting ? "..." : "Yes, Delete"}
+          {isDeleting ? "..." : "Yes"}
         </button>
         <button onClick={() => setConfirm(false)}
           style={{ padding: "3px 8px", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#64748b", fontSize: "11px", cursor: "pointer", fontFamily: font }}>
-          Cancel
+          No
         </button>
       </div>
     );
@@ -58,8 +57,7 @@ export default function Dashboard() {
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [deletingId, setDeletingId] = useState(null);
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => { fetchComplaints(); }, []);
 
@@ -75,9 +73,7 @@ export default function Dashboard() {
       setComplaints(prev => prev.filter(c => c._id !== id));
     } catch (err) {
       alert(err.response?.data?.message || "Failed to delete");
-    } finally {
-      setDeletingId(null);
-    }
+    } finally { setDeletingId(null); }
   };
 
   const statuses = ["All", "Pending", "In Progress", "Resolved", "Rejected"];
@@ -97,16 +93,13 @@ export default function Dashboard() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px", flexWrap: "wrap", gap: "12px" }}>
           <div>
             <h1 style={{ fontSize: "20px", fontWeight: "700", margin: "0 0 3px", letterSpacing: "-0.5px" }}>My Complaints</h1>
-            <p style={{ fontSize: "12px", color: "#64748b", margin: 0 }}>Welcome, <span style={{ color: "#94a3b8", fontWeight: "500" }}>{user?.name}</span> 👋</p>
+            <p style={{ fontSize: "12px", color: "#64748b", margin: 0 }}>
+              Welcome, <span style={{ color: "#94a3b8", fontWeight: "500" }}>{user?.name}</span> 👋
+            </p>
           </div>
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-            <Link to="/create" style={{ padding: "9px 16px", background: "linear-gradient(135deg, #3b82f6, #06b6d4)", borderRadius: "9px", color: "white", fontSize: "13px", fontWeight: "600", textDecoration: "none", whiteSpace: "nowrap" }}>
-              + New Complaint
-            </Link>
-            <button onClick={() => { logout(); navigate("/login"); }} style={{ padding: "9px 14px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "9px", color: "#f87171", fontSize: "13px", cursor: "pointer", fontFamily: font }}>
-              🚪 Logout
-            </button>
-          </div>
+          <Link to="/create" style={{ padding: "9px 18px", background: "linear-gradient(135deg, #3b82f6, #06b6d4)", borderRadius: "9px", color: "white", fontSize: "13px", fontWeight: "600", textDecoration: "none", whiteSpace: "nowrap" }}>
+            + New Complaint
+          </Link>
         </div>
 
         {/* Update banner */}
@@ -179,8 +172,6 @@ export default function Dashboard() {
                         <span style={{ fontSize: "11px", color: "#475569" }}>🏷️ {c.category}</span>
                         <span style={{ fontSize: "11px", color: "#475569" }}>📅 {formatDate(c.createdAt)}</span>
                       </div>
-
-                      {/* Bottom row — status message + image + delete */}
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", paddingTop: "10px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "11px", color: cfg.color }}>
                           <span>{cfg.icon}</span><span>{cfg.message}</span>
@@ -191,7 +182,6 @@ export default function Dashboard() {
                               <img src={`${BACKEND_URL}${c.image}`} alt="" style={{ width: "32px", height: "32px", borderRadius: "5px", objectFit: "cover", border: "1px solid rgba(255,255,255,0.1)" }} />
                             </a>
                           )}
-                          {/* Delete button on every card */}
                           <DeleteButton complaint={c} onDelete={handleDelete} deleting={deletingId} />
                         </div>
                       </div>
