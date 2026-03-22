@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { getProfile } from "../services/api";
 
 const font = "'Segoe UI', system-ui, sans-serif";
 
@@ -8,6 +9,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [isBanned, setIsBanned] = useState(false);
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -32,19 +34,30 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  // Fetch ban status for students
+  useEffect(() => {
+    if (user && user.role === "student") {
+      getProfile()
+        .then(({ data }) => setIsBanned(data.isBanned || false))
+        .catch(() => {});
+    }
+  }, [user]);
+
   const handleLogout = () => { logout(); navigate("/login"); };
 
-  // ── UPDATED: Students link added for admin ──
+  // Hide "New Complaint" if student is banned
   const links = user?.role === "admin"
     ? [
         { to: "/admin",    label: "📊 Dashboard" },
         { to: "/dashboard", label: "📋 Complaints" },
         { to: "/students", label: "👥 Students" },
       ]
-    : [
-        { to: "/dashboard", label: "📋 My Complaints" },
-        { to: "/create",    label: "✏️ New Complaint" },
-      ];
+    : isBanned
+      ? [{ to: "/dashboard", label: "📋 My Complaints" }]
+      : [
+          { to: "/dashboard", label: "📋 My Complaints" },
+          { to: "/create",    label: "✏️ New Complaint" },
+        ];
 
   const accent = user?.role === "admin" ? "#f59e0b" : "#38bdf8";
   const gradient = user?.role === "admin"
@@ -90,7 +103,7 @@ export default function Navbar() {
                 Smart Campus
               </div>
               <div style={{ fontSize: "9px", color: "#64748b", letterSpacing: "1px", textTransform: "uppercase" }}>
-                {isAuthPage ? "System" : user?.role === "admin" ? "Admin" : "Student"}
+                {isAuthPage ? "System" : user?.role === "admin" ? "Admin" : isBanned ? "Suspended" : "Student"}
               </div>
             </div>
           </Link>
@@ -112,6 +125,14 @@ export default function Navbar() {
 
             {!isAuthPage && user && (
               <>
+                {/* Banned indicator in navbar */}
+                {isBanned && user.role === "student" && (
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "5px 12px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "20px" }}>
+                    <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#ef4444" }} />
+                    <span style={{ fontSize: "11px", color: "#f87171", fontWeight: "600" }}>Account Suspended</span>
+                  </div>
+                )}
+
                 {links.map(({ to, label }) => (
                   <Link key={to} to={to} style={linkStyle(to)}>{label}</Link>
                 ))}
@@ -127,7 +148,8 @@ export default function Navbar() {
                   }}>
                     <div style={{
                       width: "28px", height: "28px", borderRadius: "50%",
-                      background: gradient, display: "flex", alignItems: "center",
+                      background: isBanned && user.role === "student" ? "rgba(239,68,68,0.3)" : gradient,
+                      display: "flex", alignItems: "center",
                       justifyContent: "center", fontSize: "12px", fontWeight: "700", color: "white",
                     }}>
                       {user.name?.charAt(0).toUpperCase()}
@@ -148,16 +170,25 @@ export default function Navbar() {
                       <div style={{ padding: "8px 12px 10px", borderBottom: "1px solid rgba(255,255,255,0.06)", marginBottom: "6px" }}>
                         <div style={{ fontSize: "13px", fontWeight: "600", color: "#f1f5f9" }}>{user.name}</div>
                         <div style={{ fontSize: "11px", color: "#475569", marginTop: "2px" }}>{user.email}</div>
-                        <div style={{ display: "inline-flex", marginTop: "6px", fontSize: "10px", fontWeight: "600", color: accent, background: `${accent}18`, padding: "2px 8px", borderRadius: "10px", textTransform: "uppercase" }}>
-                          {user.role === "admin" ? "🛡️ Admin" : "🎓 Student"}
+                        <div style={{ display: "flex", gap: "6px", marginTop: "6px", flexWrap: "wrap" }}>
+                          <div style={{ display: "inline-flex", fontSize: "10px", fontWeight: "600", color: accent, background: `${accent}18`, padding: "2px 8px", borderRadius: "10px", textTransform: "uppercase" }}>
+                            {user.role === "admin" ? "🛡️ Admin" : "🎓 Student"}
+                          </div>
+                          {isBanned && user.role === "student" && (
+                            <div style={{ display: "inline-flex", fontSize: "10px", fontWeight: "600", color: "#f87171", background: "rgba(239,68,68,0.1)", padding: "2px 8px", borderRadius: "10px" }}>
+                              🚫 Suspended
+                            </div>
+                          )}
                         </div>
                       </div>
+
                       <Link to="/profile" onClick={() => setShowDropdown(false)}
                         style={{ display: "flex", alignItems: "center", gap: "8px", padding: "9px 12px", borderRadius: "8px", textDecoration: "none", color: "#94a3b8", fontSize: "13px" }}
                         onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "#f1f5f9"; }}
                         onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#94a3b8"; }}>
                         ✏️ Edit Profile
                       </Link>
+
                       {user.role === "admin" && (
                         <Link to="/students" onClick={() => setShowDropdown(false)}
                           style={{ display: "flex", alignItems: "center", gap: "8px", padding: "9px 12px", borderRadius: "8px", textDecoration: "none", color: "#94a3b8", fontSize: "13px" }}
@@ -166,6 +197,7 @@ export default function Navbar() {
                           👥 Manage Students
                         </Link>
                       )}
+
                       <button onClick={handleLogout}
                         style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "9px 12px", borderRadius: "8px", background: "transparent", border: "none", color: "#f87171", fontSize: "13px", cursor: "pointer", fontFamily: font, textAlign: "left" }}
                         onMouseEnter={e => e.currentTarget.style.background = "rgba(239,68,68,0.08)"}
@@ -207,12 +239,14 @@ export default function Navbar() {
             {!isAuthPage && user && (
               <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px", background: "rgba(255,255,255,0.03)", borderRadius: "10px", marginBottom: "6px" }}>
-                  <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: gradient, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "15px", fontWeight: "700", color: "white", flexShrink: 0 }}>
+                  <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: isBanned && user.role === "student" ? "rgba(239,68,68,0.3)" : gradient, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "15px", fontWeight: "700", color: "white", flexShrink: 0 }}>
                     {user.name?.charAt(0).toUpperCase()}
                   </div>
                   <div>
                     <div style={{ fontSize: "14px", fontWeight: "600", color: "#f1f5f9" }}>{user.name}</div>
-                    <div style={{ fontSize: "11px", color: "#475569" }}>{user.email}</div>
+                    <div style={{ fontSize: "11px", color: isBanned && user.role === "student" ? "#f87171" : "#475569" }}>
+                      {isBanned && user.role === "student" ? "🚫 Account Suspended" : user.email}
+                    </div>
                   </div>
                 </div>
 
