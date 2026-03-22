@@ -4,9 +4,7 @@ const API = axios.create({ baseURL: "https://smart-campus-backend-ggrp.onrender.
 
 API.interceptors.request.use((config) => {
   const user = JSON.parse(localStorage.getItem("user") || "null");
-  if (user?.token) {
-    config.headers.Authorization = `Bearer ${user.token}`;
-  }
+  if (user?.token) config.headers.Authorization = `Bearer ${user.token}`;
   return config;
 });
 
@@ -19,6 +17,11 @@ export const getMe = () => API.get("/auth/me");
 export const getProfile = () => API.get("/users/profile");
 export const updateProfile = (data) => API.put("/users/profile", data);
 
+// Students (admin)
+export const getAllStudents = () => API.get("/users/students");
+export const banUser = (id, data) => API.patch(`/users/${id}/ban`, data);
+export const unbanUser = (id) => API.patch(`/users/${id}/unban`);
+
 // Complaints
 export const createComplaint = (formData) =>
   API.post("/complaints/create", formData, {
@@ -30,3 +33,4 @@ export const updateComplaintStatus = (id, status) =>
   API.patch(`/complaints/${id}/status`, { status });
 export const deleteComplaint = (id) => API.delete(`/complaints/${id}`);
 export const getAnalytics = () => API.get("/complaints/analytics");
+export const exportComplaints = () => API.get("/complaints/export");

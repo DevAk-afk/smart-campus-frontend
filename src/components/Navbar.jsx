@@ -34,9 +34,17 @@ export default function Navbar() {
 
   const handleLogout = () => { logout(); navigate("/login"); };
 
+  // ── UPDATED: Students link added for admin ──
   const links = user?.role === "admin"
-    ? [{ to: "/admin", label: "📊 Dashboard" }, { to: "/dashboard", label: "📋 Complaints" }]
-    : [{ to: "/dashboard", label: "📋 My Complaints" }, { to: "/create", label: "✏️ New Complaint" }];
+    ? [
+        { to: "/admin",    label: "📊 Dashboard" },
+        { to: "/dashboard", label: "📋 Complaints" },
+        { to: "/students", label: "👥 Students" },
+      ]
+    : [
+        { to: "/dashboard", label: "📋 My Complaints" },
+        { to: "/create",    label: "✏️ New Complaint" },
+      ];
 
   const accent = user?.role === "admin" ? "#f59e0b" : "#38bdf8";
   const gradient = user?.role === "admin"
@@ -144,12 +152,22 @@ export default function Navbar() {
                           {user.role === "admin" ? "🛡️ Admin" : "🎓 Student"}
                         </div>
                       </div>
-                      <Link to="/profile" onClick={() => setShowDropdown(false)} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "9px 12px", borderRadius: "8px", textDecoration: "none", color: "#94a3b8", fontSize: "13px" }}
+                      <Link to="/profile" onClick={() => setShowDropdown(false)}
+                        style={{ display: "flex", alignItems: "center", gap: "8px", padding: "9px 12px", borderRadius: "8px", textDecoration: "none", color: "#94a3b8", fontSize: "13px" }}
                         onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "#f1f5f9"; }}
                         onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#94a3b8"; }}>
                         ✏️ Edit Profile
                       </Link>
-                      <button onClick={handleLogout} style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "9px 12px", borderRadius: "8px", background: "transparent", border: "none", color: "#f87171", fontSize: "13px", cursor: "pointer", fontFamily: font, textAlign: "left" }}
+                      {user.role === "admin" && (
+                        <Link to="/students" onClick={() => setShowDropdown(false)}
+                          style={{ display: "flex", alignItems: "center", gap: "8px", padding: "9px 12px", borderRadius: "8px", textDecoration: "none", color: "#94a3b8", fontSize: "13px" }}
+                          onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "#f1f5f9"; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#94a3b8"; }}>
+                          👥 Manage Students
+                        </Link>
+                      )}
+                      <button onClick={handleLogout}
+                        style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "9px 12px", borderRadius: "8px", background: "transparent", border: "none", color: "#f87171", fontSize: "13px", cursor: "pointer", fontFamily: font, textAlign: "left" }}
                         onMouseEnter={e => e.currentTarget.style.background = "rgba(239,68,68,0.08)"}
                         onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                         🚪 Logout
@@ -175,12 +193,9 @@ export default function Navbar() {
           </button>
         </div>
 
-        {/* Mobile menu dropdown */}
+        {/* Mobile menu */}
         {showMobileMenu && (
-          <div style={{
-            borderTop: "1px solid rgba(255,255,255,0.06)",
-            padding: "12px", background: "#0f172a",
-          }}>
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "12px", background: "#0f172a" }}>
             {isAuthPage && (
               <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                 <Link to="/login" style={{ ...linkStyle("/login"), textAlign: "center" }}>Sign In</Link>
@@ -191,7 +206,6 @@ export default function Navbar() {
 
             {!isAuthPage && user && (
               <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                {/* User info */}
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px", background: "rgba(255,255,255,0.03)", borderRadius: "10px", marginBottom: "6px" }}>
                   <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: gradient, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "15px", fontWeight: "700", color: "white", flexShrink: 0 }}>
                     {user.name?.charAt(0).toUpperCase()}

@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import CreateComplaint from "./pages/CreateComplaint";
 import AdminDashboard from "./pages/AdminDashboard";
 import Profile from "./pages/Profile";
+import StudentsPage from "./pages/StudentsPage";
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
           <Route path="/create" element={<ProtectedRoute><CreateComplaint /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/students" element={<ProtectedRoute adminOnly><StudentsPage /></ProtectedRoute>} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
