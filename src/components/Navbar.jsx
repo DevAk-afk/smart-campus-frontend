@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getProfile } from "../services/api";
@@ -24,33 +24,50 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  useEffect(() => { setShowMobileMenu(false); setShowDropdown(false); }, [location.pathname]);
+  useEffect(() => {
+    setShowMobileMenu(false);
+    setShowDropdown(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     const handler = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setShowDropdown(false);
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target))
+        setShowDropdown(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Fetch ban status for students
-  useEffect(() => {
-    if (user && user.role === "student") {
-      getProfile()
-        .then(({ data }) => setIsBanned(data.isBanned || false))
-        .catch(() => {});
+  // Poll ban status every 10 seconds for students
+  const checkBanStatus = useCallback(async () => {
+    if (!user || user.role !== "student") return;
+    try {
+      const { data } = await getProfile();
+      setIsBanned(data.isBanned || false);
+    } catch (err) {
+      // silently ignore
     }
   }, [user]);
+
+  useEffect(() => {
+    if (!user || user.role !== "student") return;
+
+    // Check immediately on mount
+    checkBanStatus();
+
+    // Then check every 10 seconds
+    const interval = setInterval(checkBanStatus, 10000);
+    return () => clearInterval(interval);
+  }, [user, checkBanStatus]);
 
   const handleLogout = () => { logout(); navigate("/login"); };
 
   // Hide "New Complaint" if student is banned
   const links = user?.role === "admin"
     ? [
-        { to: "/admin",    label: "📊 Dashboard" },
+        { to: "/admin",     label: "📊 Dashboard" },
         { to: "/dashboard", label: "📋 Complaints" },
-        { to: "/students", label: "👥 Students" },
+        { to: "/students",  label: "👥 Students" },
       ]
     : isBanned
       ? [{ to: "/dashboard", label: "📋 My Complaints" }]
@@ -89,7 +106,8 @@ export default function Navbar() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: "60px", maxWidth: "1200px", margin: "0 auto" }}>
 
           {/* Logo */}
-          <Link to={user ? (user.role === "admin" ? "/admin" : "/dashboard") : "/login"}
+          <Link
+            to={user ? (user.role === "admin" ? "/admin" : "/dashboard") : "/login"}
             style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "10px" }}>
             <div style={{
               width: "34px", height: "34px", flexShrink: 0,
@@ -125,11 +143,11 @@ export default function Navbar() {
 
             {!isAuthPage && user && (
               <>
-                {/* Banned indicator in navbar */}
+                {/* Banned indicator pill */}
                 {isBanned && user.role === "student" && (
                   <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "5px 12px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "20px" }}>
                     <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#ef4444" }} />
-                    <span style={{ fontSize: "11px", color: "#f87171", fontWeight: "600" }}>Account Suspended</span>
+                    <span style={{ fontSize: "11px", color: "#f87171", fontWeight: "600" }}>Suspended</span>
                   </div>
                 )}
 
@@ -148,7 +166,9 @@ export default function Navbar() {
                   }}>
                     <div style={{
                       width: "28px", height: "28px", borderRadius: "50%",
-                      background: isBanned && user.role === "student" ? "rgba(239,68,68,0.3)" : gradient,
+                      background: isBanned && user.role === "student"
+                        ? "rgba(239,68,68,0.4)"
+                        : gradient,
                       display: "flex", alignItems: "center",
                       justifyContent: "center", fontSize: "12px", fontWeight: "700", color: "white",
                     }}>
@@ -239,7 +259,7 @@ export default function Navbar() {
             {!isAuthPage && user && (
               <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px", background: "rgba(255,255,255,0.03)", borderRadius: "10px", marginBottom: "6px" }}>
-                  <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: isBanned && user.role === "student" ? "rgba(239,68,68,0.3)" : gradient, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "15px", fontWeight: "700", color: "white", flexShrink: 0 }}>
+                  <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: isBanned && user.role === "student" ? "rgba(239,68,68,0.4)" : gradient, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "15px", fontWeight: "700", color: "white", flexShrink: 0 }}>
                     {user.name?.charAt(0).toUpperCase()}
                   </div>
                   <div>

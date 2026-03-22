@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { getComplaints, deleteComplaint, getProfile } from "../services/api";
 import { useAuth } from "../context/AuthContext";
@@ -59,24 +59,26 @@ export default function Dashboard() {
   const [banStatus, setBanStatus] = useState({ isBanned: false, banReason: "" });
   const { user } = useAuth();
 
-  useEffect(() => {
-    fetchComplaints();
-    fetchBanStatus();
-  }, []);
-
-  const fetchComplaints = async () => {
-    try { const { data } = await getComplaints(); setComplaints(data); }
-    finally { setLoading(false); }
-  };
-
-  // Fetch latest profile to get real-time ban status
-  const fetchBanStatus = async () => {
+  const fetchBanStatus = useCallback(async () => {
     try {
       const { data } = await getProfile();
       setBanStatus({ isBanned: data.isBanned || false, banReason: data.banReason || "" });
     } catch (err) {
       console.error("Could not fetch profile", err);
     }
+  }, []);
+
+  useEffect(() => {
+    fetchComplaints();
+    fetchBanStatus();
+    // Poll ban status every 10 seconds — updates instantly without refresh
+    const interval = setInterval(fetchBanStatus, 10000);
+    return () => clearInterval(interval);
+  }, [fetchBanStatus]);
+
+  const fetchComplaints = async () => {
+    try { const { data } = await getComplaints(); setComplaints(data); }
+    finally { setLoading(false); }
   };
 
   const handleDelete = async (id) => {
