@@ -1,22 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getComplaints, deleteComplaint } from "../services/api";
+import { getComplaints, deleteComplaint, getProfile } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 const font = "'Segoe UI', system-ui, sans-serif";
 const BACKEND_URL = "https://smart-campus-backend-ggrp.onrender.com";
 
 const statusCfg = {
-  Pending:       { color: "#f59e0b", bg: "rgba(245,158,11,0.1)",  border: "rgba(245,158,11,0.25)",  icon: "⏳", message: "Awaiting admin review." },
-  "In Progress": { color: "#38bdf8", bg: "rgba(56,189,248,0.1)",  border: "rgba(56,189,248,0.25)",  icon: "⚙️", message: "Admin is working on this." },
-  Resolved:      { color: "#10b981", bg: "rgba(16,185,129,0.1)",  border: "rgba(16,185,129,0.25)",  icon: "✅", message: "Your complaint has been resolved!" },
-  Rejected:      { color: "#ef4444", bg: "rgba(239,68,68,0.1)",   border: "rgba(239,68,68,0.25)",   icon: "❌", message: "Complaint was rejected by admin." },
+  Pending:       { color: "#f59e0b", bg: "rgba(245,158,11,0.1)", border: "rgba(245,158,11,0.25)", icon: "⏳", message: "Awaiting admin review." },
+  "In Progress": { color: "#38bdf8", bg: "rgba(56,189,248,0.1)", border: "rgba(56,189,248,0.25)", icon: "⚙️", message: "Admin is working on this." },
+  Resolved:      { color: "#10b981", bg: "rgba(16,185,129,0.1)", border: "rgba(16,185,129,0.25)", icon: "✅", message: "Your complaint has been resolved!" },
+  Rejected:      { color: "#ef4444", bg: "rgba(239,68,68,0.1)", border: "rgba(239,68,68,0.25)", icon: "❌", message: "Complaint was rejected by admin." },
 };
-
-const catIcons = {
-  Maintenance: "🔧", Cleanliness: "🧹", Security: "🔒",
-  "IT Support": "💻", Hostel: "🏠", Canteen: "🍽️", Other: "📋",
-};
+const catIcons = { Maintenance: "🔧", Cleanliness: "🧹", Security: "🔒", "IT Support": "💻", Hostel: "🏠", Canteen: "🍽️", Other: "📋" };
 
 function StatusBadge({ status }) {
   const cfg = statusCfg[status] || statusCfg.Pending;
@@ -31,7 +27,6 @@ function StatusBadge({ status }) {
 function DeleteButton({ complaint, onDelete, deleting }) {
   const [confirm, setConfirm] = useState(false);
   const isDeleting = deleting === complaint._id;
-
   if (confirm) {
     return (
       <div style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "8px", padding: "5px 10px" }}>
@@ -47,7 +42,6 @@ function DeleteButton({ complaint, onDelete, deleting }) {
       </div>
     );
   }
-
   return (
     <button onClick={() => setConfirm(true)} disabled={isDeleting}
       style={{ padding: "5px 12px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "7px", color: "#f87171", fontSize: "11px", fontWeight: "500", cursor: "pointer", fontFamily: font, display: "flex", alignItems: "center", gap: "4px" }}>
@@ -62,13 +56,27 @@ export default function Dashboard() {
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [deletingId, setDeletingId] = useState(null);
+  const [banStatus, setBanStatus] = useState({ isBanned: false, banReason: "" });
   const { user } = useAuth();
 
-  useEffect(() => { fetchComplaints(); }, []);
+  useEffect(() => {
+    fetchComplaints();
+    fetchBanStatus();
+  }, []);
 
   const fetchComplaints = async () => {
     try { const { data } = await getComplaints(); setComplaints(data); }
     finally { setLoading(false); }
+  };
+
+  // Fetch latest profile to get real-time ban status
+  const fetchBanStatus = async () => {
+    try {
+      const { data } = await getProfile();
+      setBanStatus({ isBanned: data.isBanned || false, banReason: data.banReason || "" });
+    } catch (err) {
+      console.error("Could not fetch profile", err);
+    }
   };
 
   const handleDelete = async (id) => {
@@ -100,6 +108,32 @@ export default function Dashboard() {
     <div style={{ minHeight: "100vh", background: "#0f172a", fontFamily: font, padding: "20px 16px", color: "#f1f5f9" }}>
       <div style={{ maxWidth: "900px", margin: "0 auto" }}>
 
+        {/* ── BAN BANNER ── */}
+        {banStatus.isBanned && (
+          <div style={{
+            background: "rgba(239,68,68,0.08)",
+            border: "1px solid rgba(239,68,68,0.3)",
+            borderRadius: "12px", padding: "16px 20px",
+            marginBottom: "20px",
+            display: "flex", alignItems: "flex-start", gap: "14px",
+          }}>
+            <div style={{ fontSize: "28px", flexShrink: 0 }}>🚫</div>
+            <div>
+              <div style={{ fontSize: "15px", fontWeight: "700", color: "#f87171", marginBottom: "4px" }}>
+                Your account has been suspended
+              </div>
+              <div style={{ fontSize: "13px", color: "#94a3b8", marginBottom: "6px" }}>
+                You cannot file new complaints while your account is suspended. Please contact your administrator to resolve this.
+              </div>
+              {banStatus.banReason && (
+                <div style={{ fontSize: "12px", color: "#ef4444", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "6px", padding: "6px 12px", display: "inline-block" }}>
+                  Reason: {banStatus.banReason}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px", flexWrap: "wrap", gap: "12px" }}>
           <div>
@@ -108,9 +142,12 @@ export default function Dashboard() {
               Welcome, <span style={{ color: "#94a3b8", fontWeight: "500" }}>{user?.name}</span> 👋
             </p>
           </div>
-          <Link to="/create" style={{ padding: "9px 18px", background: "linear-gradient(135deg, #3b82f6, #06b6d4)", borderRadius: "9px", color: "white", fontSize: "13px", fontWeight: "600", textDecoration: "none", whiteSpace: "nowrap" }}>
-            + New Complaint
-          </Link>
+          {/* Hide New Complaint button if banned */}
+          {!banStatus.isBanned && (
+            <Link to="/create" style={{ padding: "9px 18px", background: "linear-gradient(135deg, #3b82f6, #06b6d4)", borderRadius: "9px", color: "white", fontSize: "13px", fontWeight: "600", textDecoration: "none", whiteSpace: "nowrap" }}>
+              + New Complaint
+            </Link>
+          )}
         </div>
 
         {/* Update banner */}
@@ -126,10 +163,10 @@ export default function Dashboard() {
         {/* Stat Cards */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: "10px", marginBottom: "20px" }}>
           {[
-            { label: "Total",       val: counts.All,              color: "#f1f5f9" },
-            { label: "Pending",     val: counts.Pending,          color: "#f59e0b" },
-            { label: "In Progress", val: counts["In Progress"],   color: "#38bdf8" },
-            { label: "Resolved",    val: counts.Resolved,         color: "#10b981" },
+            { label: "Total",       val: counts.All,            color: "#f1f5f9" },
+            { label: "Pending",     val: counts.Pending,        color: "#f59e0b" },
+            { label: "In Progress", val: counts["In Progress"], color: "#38bdf8" },
+            { label: "Resolved",    val: counts.Resolved,       color: "#10b981" },
           ].map(({ label, val, color }) => (
             <div key={label} style={{ background: "#1e293b", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)", padding: "14px 16px" }}>
               <div style={{ fontSize: "10px", fontWeight: "600", color: "#64748b", letterSpacing: "0.8px", textTransform: "uppercase", marginBottom: "5px" }}>{label}</div>
@@ -155,14 +192,16 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* Cards */}
+        {/* Complaint Cards */}
         {loading ? (
           <div style={{ textAlign: "center", padding: "50px", color: "#475569" }}>Loading...</div>
         ) : filtered.length === 0 ? (
           <div style={{ textAlign: "center", padding: "50px", background: "#1e293b", borderRadius: "14px", border: "1px solid rgba(255,255,255,0.06)", color: "#475569" }}>
             <div style={{ fontSize: "32px", marginBottom: "10px" }}>📭</div>
             <div style={{ fontWeight: "600", color: "#64748b", marginBottom: "8px" }}>No complaints found</div>
-            <Link to="/create" style={{ fontSize: "13px", color: "#38bdf8", textDecoration: "none" }}>+ File your first complaint</Link>
+            {!banStatus.isBanned && (
+              <Link to="/create" style={{ fontSize: "13px", color: "#38bdf8", textDecoration: "none" }}>+ File your first complaint</Link>
+            )}
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
