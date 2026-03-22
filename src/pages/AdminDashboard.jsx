@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import { BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { getAnalytics, getComplaints, updateComplaintStatus, deleteComplaint } from "../services/api";
 import { useAuth } from "../context/AuthContext";
@@ -7,10 +6,8 @@ import { useAuth } from "../context/AuthContext";
 const font = "'Segoe UI', system-ui, sans-serif";
 const BACKEND_URL = "https://smart-campus-backend-ggrp.onrender.com";
 const POLL_INTERVAL = 10000;
-
 const STATUS_COLORS = { Pending: "#f59e0b", "In Progress": "#38bdf8", Resolved: "#10b981", Rejected: "#ef4444" };
 const CHART_COLORS = ["#3b82f6", "#06b6d4", "#8b5cf6", "#f59e0b", "#10b981", "#ef4444", "#ec4899"];
-
 const statusCfg = {
   Pending:       { color: "#f59e0b", bg: "rgba(245,158,11,0.1)",  border: "rgba(245,158,11,0.25)" },
   "In Progress": { color: "#38bdf8", bg: "rgba(56,189,248,0.1)",  border: "rgba(56,189,248,0.25)" },
@@ -41,7 +38,6 @@ const Tip = ({ active, payload, label }) => {
 function DeleteButton({ complaint, onDelete, deleting }) {
   const [confirm, setConfirm] = useState(false);
   const isDeleting = deleting === complaint._id;
-
   if (confirm) {
     return (
       <div style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "8px", padding: "5px 10px" }}>
@@ -57,7 +53,6 @@ function DeleteButton({ complaint, onDelete, deleting }) {
       </div>
     );
   }
-
   return (
     <button onClick={() => setConfirm(true)} disabled={isDeleting}
       style={{ padding: "5px 12px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "7px", color: "#f87171", fontSize: "11px", fontWeight: "500", cursor: "pointer", fontFamily: font, display: "flex", alignItems: "center", gap: "4px" }}>
@@ -71,11 +66,10 @@ function StatusActions({ complaint, onUpdate, updating }) {
   const isUpdating = updating === complaint._id;
   const actions = [
     { label: "In Progress", status: "In Progress", color: "#38bdf8", bg: "rgba(56,189,248,0.1)", border: "rgba(56,189,248,0.3)", show: current === "Pending" },
-    { label: "✓ Resolve", status: "Resolved", color: "#10b981", bg: "rgba(16,185,129,0.1)", border: "rgba(16,185,129,0.3)", show: current !== "Resolved" && current !== "Rejected" },
-    { label: "✕ Reject", status: "Rejected", color: "#ef4444", bg: "rgba(239,68,68,0.08)", border: "rgba(239,68,68,0.25)", show: current !== "Rejected" && current !== "Resolved" },
-    { label: "↺ Reopen", status: "Pending", color: "#f59e0b", bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.25)", show: current === "Resolved" || current === "Rejected" },
+    { label: "✓ Resolve",   status: "Resolved",    color: "#10b981", bg: "rgba(16,185,129,0.1)", border: "rgba(16,185,129,0.3)", show: current !== "Resolved" && current !== "Rejected" },
+    { label: "✕ Reject",    status: "Rejected",    color: "#ef4444", bg: "rgba(239,68,68,0.08)", border: "rgba(239,68,68,0.25)", show: current !== "Rejected" && current !== "Resolved" },
+    { label: "↺ Reopen",    status: "Pending",     color: "#f59e0b", bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.25)", show: current === "Resolved" || current === "Rejected" },
   ].filter(a => a.show);
-
   return (
     <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
       <span style={{ fontSize: "10px", color: "#475569" }}>Actions:</span>
@@ -150,9 +144,8 @@ export default function AdminDashboard() {
       await deleteComplaint(id);
       setComplaints(prev => prev.filter(c => c._id !== id));
       showToast("🗑️ Complaint deleted", "#64748b");
-    } catch (err) {
-      showToast(err.response?.data?.message || "Failed to delete", "#ef4444");
-    } finally { setDeletingId(null); }
+    } catch (err) { showToast(err.response?.data?.message || "Failed to delete", "#ef4444"); }
+    finally { setDeletingId(null); }
   };
 
   const statuses = ["All", "Pending", "In Progress", "Resolved", "Rejected"];
@@ -166,7 +159,11 @@ export default function AdminDashboard() {
   const trend = analytics?.recent?.map(r => ({ date: r._id?.slice(5), count: r.count })) || [];
   const formatTime = (date) => date?.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
-  if (loading) return <div style={{ minHeight: "100vh", background: "#0f172a", display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b", fontFamily: font }}>Loading...</div>;
+  if (loading) return (
+    <div style={{ minHeight: "100vh", background: "#0f172a", display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b", fontFamily: font }}>
+      Loading...
+    </div>
+  );
 
   return (
     <div style={{ minHeight: "100vh", background: "#0f172a", fontFamily: font, padding: "20px 16px", color: "#f1f5f9" }}>
@@ -178,7 +175,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Header — no logout button */}
+        {/* Header — NO logout button */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px", flexWrap: "wrap", gap: "12px" }}>
           <div>
             <h1 style={{ fontSize: "20px", fontWeight: "700", margin: "0 0 3px", letterSpacing: "-0.5px" }}>Admin Dashboard</h1>
@@ -193,7 +190,7 @@ export default function AdminDashboard() {
               </div>
             </div>
           </div>
-          {/* Only manual refresh — no logout */}
+          {/* Only refresh — no logout */}
           <button onClick={() => { fetchComplaints(true); fetchAnalytics(); }}
             style={{ padding: "8px 14px", background: "rgba(56,189,248,0.08)", border: "1px solid rgba(56,189,248,0.2)", borderRadius: "8px", color: "#38bdf8", fontSize: "12px", cursor: "pointer", fontFamily: font }}>
             ↻ Refresh
@@ -210,10 +207,10 @@ export default function AdminDashboard() {
         {/* KPI Cards */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: "10px", marginBottom: "20px" }}>
           {[
-            { label: "Total", val: complaints.length, color: "#f1f5f9" },
-            { label: "Pending", val: counts.Pending, color: "#f59e0b" },
-            { label: "In Progress", val: counts["In Progress"], color: "#38bdf8" },
-            { label: "Resolved", val: counts.Resolved, color: "#10b981" },
+            { label: "Total",       val: complaints.length,       color: "#f1f5f9" },
+            { label: "Pending",     val: counts.Pending,          color: "#f59e0b" },
+            { label: "In Progress", val: counts["In Progress"],   color: "#38bdf8" },
+            { label: "Resolved",    val: counts.Resolved,         color: "#10b981" },
           ].map(({ label, val, color }) => (
             <div key={label} style={{ background: "#1e293b", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)", padding: "14px 16px" }}>
               <div style={{ fontSize: "10px", fontWeight: "600", color: "#64748b", letterSpacing: "0.8px", textTransform: "uppercase", marginBottom: "5px" }}>{label}</div>
@@ -278,7 +275,6 @@ export default function AdminDashboard() {
                           <span style={{ fontSize: "11px", color: "#475569" }}>📅 {new Date(c.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
                           {c.image && <a href={`${BACKEND_URL}${c.image}`} target="_blank" rel="noreferrer"><img src={`${BACKEND_URL}${c.image}`} alt="" style={{ width: "32px", height: "32px", borderRadius: "5px", objectFit: "cover", border: "1px solid rgba(255,255,255,0.1)" }} /></a>}
                         </div>
-                        {/* Actions + Delete */}
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", paddingTop: "10px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
                           <StatusActions complaint={c} onUpdate={handleStatusUpdate} updating={updatingId} />
                           <DeleteButton complaint={c} onDelete={handleDelete} deleting={deletingId} />

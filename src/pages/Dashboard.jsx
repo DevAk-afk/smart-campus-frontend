@@ -7,18 +7,23 @@ const font = "'Segoe UI', system-ui, sans-serif";
 const BACKEND_URL = "https://smart-campus-backend-ggrp.onrender.com";
 
 const statusCfg = {
-  Pending:       { color: "#f59e0b", bg: "rgba(245,158,11,0.1)", border: "rgba(245,158,11,0.25)", icon: "⏳", message: "Awaiting admin review." },
-  "In Progress": { color: "#38bdf8", bg: "rgba(56,189,248,0.1)", border: "rgba(56,189,248,0.25)", icon: "⚙️", message: "Admin is working on this." },
-  Resolved:      { color: "#10b981", bg: "rgba(16,185,129,0.1)", border: "rgba(16,185,129,0.25)", icon: "✅", message: "Your complaint has been resolved!" },
-  Rejected:      { color: "#ef4444", bg: "rgba(239,68,68,0.1)", border: "rgba(239,68,68,0.25)", icon: "❌", message: "Complaint was rejected by admin." },
+  Pending:       { color: "#f59e0b", bg: "rgba(245,158,11,0.1)",  border: "rgba(245,158,11,0.25)",  icon: "⏳", message: "Awaiting admin review." },
+  "In Progress": { color: "#38bdf8", bg: "rgba(56,189,248,0.1)",  border: "rgba(56,189,248,0.25)",  icon: "⚙️", message: "Admin is working on this." },
+  Resolved:      { color: "#10b981", bg: "rgba(16,185,129,0.1)",  border: "rgba(16,185,129,0.25)",  icon: "✅", message: "Your complaint has been resolved!" },
+  Rejected:      { color: "#ef4444", bg: "rgba(239,68,68,0.1)",   border: "rgba(239,68,68,0.25)",   icon: "❌", message: "Complaint was rejected by admin." },
 };
-const catIcons = { Maintenance: "🔧", Cleanliness: "🧹", Security: "🔒", "IT Support": "💻", Hostel: "🏠", Canteen: "🍽️", Other: "📋" };
+
+const catIcons = {
+  Maintenance: "🔧", Cleanliness: "🧹", Security: "🔒",
+  "IT Support": "💻", Hostel: "🏠", Canteen: "🍽️", Other: "📋",
+};
 
 function StatusBadge({ status }) {
   const cfg = statusCfg[status] || statusCfg.Pending;
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "3px 10px", borderRadius: "20px", fontSize: "10px", fontWeight: "600", color: cfg.color, background: cfg.bg, border: `1px solid ${cfg.border}`, textTransform: "uppercase", whiteSpace: "nowrap" }}>
-      <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: cfg.color, display: "inline-block", flexShrink: 0 }} />{status}
+      <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: cfg.color, display: "inline-block", flexShrink: 0 }} />
+      {status}
     </span>
   );
 }
@@ -77,13 +82,19 @@ export default function Dashboard() {
   };
 
   const statuses = ["All", "Pending", "In Progress", "Resolved", "Rejected"];
-  const counts = Object.fromEntries(statuses.map(s => [s, s === "All" ? complaints.length : complaints.filter(c => c.status === s).length]));
+  const counts = Object.fromEntries(
+    statuses.map(s => [s, s === "All" ? complaints.length : complaints.filter(c => c.status === s).length])
+  );
 
   const filtered = complaints
     .filter(c => filter === "All" || c.status === filter)
-    .filter(c => !search || c.title.toLowerCase().includes(search.toLowerCase()) || c.description.toLowerCase().includes(search.toLowerCase()));
+    .filter(c => !search ||
+      c.title.toLowerCase().includes(search.toLowerCase()) ||
+      c.description.toLowerCase().includes(search.toLowerCase())
+    );
 
-  const formatDate = (iso) => new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  const formatDate = (iso) =>
+    new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 
   return (
     <div style={{ minHeight: "100vh", background: "#0f172a", fontFamily: font, padding: "20px 16px", color: "#f1f5f9" }}>
@@ -103,7 +114,7 @@ export default function Dashboard() {
         </div>
 
         {/* Update banner */}
-        {complaints.some(c => c.status === "Resolved" || c.status === "Rejected" || c.status === "In Progress") && (
+        {complaints.some(c => ["Resolved", "Rejected", "In Progress"].includes(c.status)) && (
           <div style={{ background: "#1e293b", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)", padding: "12px 16px", marginBottom: "16px", display: "flex", gap: "16px", flexWrap: "wrap" }}>
             <span style={{ fontSize: "11px", color: "#64748b", alignSelf: "center" }}>Updates:</span>
             {counts.Resolved > 0 && <span style={{ fontSize: "12px", color: "#10b981", fontWeight: "600" }}>✅ {counts.Resolved} Resolved</span>}
@@ -112,13 +123,13 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Stats */}
+        {/* Stat Cards */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: "10px", marginBottom: "20px" }}>
           {[
-            { label: "Total", val: counts.All, color: "#f1f5f9" },
-            { label: "Pending", val: counts.Pending, color: "#f59e0b" },
-            { label: "In Progress", val: counts["In Progress"], color: "#38bdf8" },
-            { label: "Resolved", val: counts.Resolved, color: "#10b981" },
+            { label: "Total",       val: counts.All,              color: "#f1f5f9" },
+            { label: "Pending",     val: counts.Pending,          color: "#f59e0b" },
+            { label: "In Progress", val: counts["In Progress"],   color: "#38bdf8" },
+            { label: "Resolved",    val: counts.Resolved,         color: "#10b981" },
           ].map(({ label, val, color }) => (
             <div key={label} style={{ background: "#1e293b", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)", padding: "14px 16px" }}>
               <div style={{ fontSize: "10px", fontWeight: "600", color: "#64748b", letterSpacing: "0.8px", textTransform: "uppercase", marginBottom: "5px" }}>{label}</div>
@@ -136,11 +147,15 @@ export default function Dashboard() {
               </button>
             ))}
           </div>
-          <input style={{ width: "100%", padding: "9px 14px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", color: "#f1f5f9", fontSize: "13px", outline: "none", boxSizing: "border-box", fontFamily: font }}
-            placeholder="🔍  Search complaints..." value={search} onChange={e => setSearch(e.target.value)} />
+          <input
+            style={{ width: "100%", padding: "9px 14px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", color: "#f1f5f9", fontSize: "13px", outline: "none", boxSizing: "border-box", fontFamily: font }}
+            placeholder="🔍  Search complaints..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
         </div>
 
-        {/* Complaint Cards */}
+        {/* Cards */}
         {loading ? (
           <div style={{ textAlign: "center", padding: "50px", color: "#475569" }}>Loading...</div>
         ) : filtered.length === 0 ? (
@@ -174,7 +189,8 @@ export default function Dashboard() {
                       </div>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", paddingTop: "10px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "11px", color: cfg.color }}>
-                          <span>{cfg.icon}</span><span>{cfg.message}</span>
+                          <span>{cfg.icon}</span>
+                          <span>{cfg.message}</span>
                         </div>
                         <div style={{ display: "flex", gap: "8px", alignItems: "center", flexShrink: 0 }}>
                           {c.image && (
